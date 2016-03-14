@@ -20,7 +20,7 @@ class GTM:
         self.T = inputmat - inputmat.mean(axis=0)
         self.n, self.d = self.T.shape
         # Set automatic size of the array according to the PCA of the input data
-        self.nx, self.ny = self.get_dim(nx, ny)
+        self.nx, self.ny, eival, eivec = self.get_dim(nx, ny)
         # Grid of the latent space
         self.X = self.get_grid(self.nx, self.ny)
         print "Latent space grid (X) shape: %s"%str(self.X.shape)
@@ -29,7 +29,7 @@ class GTM:
         self.Phi = self.radial_basis_function_network(n_center=n_center)
         print "Size of the radial basis function network (Phi): %s"%str(self.Phi.shape)
         # Initial weigths:
-        self.W = self.init_weights()
+        self.W = self.init_weights(eivec)
         print "Size of the matrix of weigths (W): %s"%str(self.W.shape)
         # Projection of the Latent space to the Data space:
         self.y = numpy.dot(self.Phi, self.W)
@@ -57,7 +57,7 @@ class GTM:
         x_dim, y_dim = map(lambda x: int(round(x)), sqev / (
                            (numpy.prod(sqev) / (x_dim * y_dim)) ** (1. / 2)))
         print "Size of map will be %dx%d." % (x_dim, y_dim)
-        return x_dim, y_dim
+        return x_dim, y_dim, eival, eivec
 
     def radial_basis_function(self, center, radius):
         radius=numpy.float(radius)
@@ -65,7 +65,7 @@ class GTM:
         return lambda x: numpy.exp(-(beta/2) * ((x - center)**2).sum(axis=-1))
 
     def get_grid(self, x_dim, y_dim):
-        X = numpy.asarray(numpy.meshgrid(numpy.linspace(0,x_dim,num=x_dim), numpy.linspace(0,y_dim,num=y_dim))).T
+        X = numpy.asarray(numpy.meshgrid(numpy.linspace(0,1,num=x_dim), numpy.linspace(0,1,num=y_dim))).T
         return X
 
     def radial_basis_function_network(self, n_center):
@@ -91,8 +91,10 @@ class GTM:
         Phi = numpy.c_[Phi, self.X.reshape(self.k,2), numpy.ones(self.k)]
         return numpy.asarray(Phi)
 
-    def init_weights(self):
-        W = (numpy.random.normal(size=(self.Phi.shape[1],self.T.shape[1])))
+    def init_weights(self, eivec):
+        W = numpy.zeros((self.Phi.shape[1],self.T.shape[1]))
+        print eivec
+        W[-4:-1,:] = eivec
         y = numpy.dot(self.Phi,W)
         y_var = y.var(axis=0)
         data_var = self.T.var(axis=0)
