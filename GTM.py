@@ -185,20 +185,6 @@ class GTM:
         numpy.fill_diagonal(G, R.sum(axis=1))
         return G
 
-    def get_new_weights_beta(t, W, beta):
-        """
-        Return the new weights and variance (1/beta)
-        """
-        R_old, sqcdist = get_posterior_array(t, W, beta)
-        G_old = get_G_array(R_old)
-        Phi_G_Phi = numpy.dot(Phi.T, numpy.dot(G_old,Phi))
-        prod_1 = numpy.dot(numpy.linalg.inv(Phi_G_Phi), Phi.T)
-        prod_2 = numpy.dot(prod_1, R_old)
-        W_new = numpy.dot(prod_2, t)
-        R_new, sqcdist = get_posterior_array(t, W_new, beta)
-        beta_new = 1/ ( (R_old*sqcdist).sum()/prod(t.shape) )
-        return W_new, beta_new
-
     def learn(self, n_iterations):
         log_likelihood = []
         progress = Progress.Progress(n_iterations, delta=10)
