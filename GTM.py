@@ -10,10 +10,12 @@ import scipy.spatial.distance
 import progress_reporting as Progress
 
 class GTM:
-    def __init__(self, inputmat, (nx, ny)):
+    def __init__(self, inputmat, (nx, ny), n_center = 10):
         """
         • inputmat: input data size: n×d, with n the number of data and d the 
         dimension of the data -> self.T
+        • nx, ny: dimension of the latent space (number of cells)
+        • n_center: number of center for the basis functions
         """
         self.T = inputmat - inputmat.mean(axis=0)
         self.n, self.d = self.T.shape
@@ -24,7 +26,7 @@ class GTM:
         print "Latent space grid (X) shape: %s"%str(self.X.shape)
         # Define the radial basis function network
         self.k = self.nx * self.ny
-        self.Phi = self.radial_basis_function_network()
+        self.Phi = self.radial_basis_function_network(n_center=n_center)
         print "Size of the radial basis function network (Phi): %s"%str(self.Phi.shape)
         # Initial weigths:
         self.W = self.init_weights()
@@ -66,14 +68,16 @@ class GTM:
         X = numpy.asarray(numpy.meshgrid(numpy.linspace(0,x_dim,num=x_dim), numpy.linspace(0,y_dim,num=y_dim))).T
         return X
 
-    def radial_basis_function_network(self):
+    def radial_basis_function_network(self, n_center):
         """
         Return the radial basis function network for a given radius, and the corresponding network X.
         The radius is given in spacing unit: radius×s where s is the spacing of the network
-        By default the number of centers is the number of cells in X divided by 4
+        The number of centers is n_center
         """
-        num_x = self.nx/10
-        num_y = self.ny/10
+        factor = int(numpy.sqrt(self.nx*self.ny/n_center))
+        num_x = self.nx/factor
+        num_y = self.ny/factor
+        print "The number of center for the radial basis functions will be: %d"%(num_x*num_y)
         centers = numpy.asarray(numpy.meshgrid(numpy.linspace(0,self.nx-1,num_x),
                   numpy.linspace(0,self.ny-1,num_y))).T.reshape(num_x*num_y,2)
         radius = 2*numpy.linalg.norm(self.X[tuple(centers[1])] -
