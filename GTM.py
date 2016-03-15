@@ -221,3 +221,12 @@ class GTM:
         R, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
         posterior_mode = numpy.asarray([numpy.unravel_index(e, (self.nx, self.ny)) for e in R.argmax(axis=0)])
         return posterior_mode
+
+    def posterior_mean(self):
+        """
+        Return the posterior mean projection:
+        x_n = sum_k(x_k.p(x_k|t_n))
+        """
+        R, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
+        posterior_mean = numpy.dot(R.T, self.X.reshape(self.nx * self.ny, 2))
+        return posterior_mean
