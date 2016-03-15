@@ -214,3 +214,12 @@ class GTM:
             progress.count(report="log-likelihood: %.3f | beta: %.3f"%(ll, self.beta))
             log_likelihood.append(ll)
         return self.W, self.beta, log_likelihood
+
+    def posterior_mode(self):
+        """
+        Return the posterior mode projection:
+        x_n = argmax_{x_k}(p(x_k|t_n))
+        """
+        R, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
+        posterior_mode = numpy.asarray([numpy.unravel_index(e, (self.nx, self.ny)) for e in R.argmax(axis=0)])
+        return posterior_mode
