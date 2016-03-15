@@ -94,7 +94,7 @@ class GTM:
     def init_weights(self, eivec):
         W = numpy.zeros((self.Phi.shape[1],self.T.shape[1]))
         print eivec
-        W[-4:-1,:] = eivec
+        W[-3:-1,:] = eivec[:2]
         y = numpy.dot(self.Phi,W)
         y_var = y.var(axis=0)
         data_var = self.T.var(axis=0)
