@@ -197,14 +197,12 @@ class GTM:
         R_old, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
         print "Starting Log-likelihood: %.4f"%ll
         for i in range(n_iterations):
+            beta_new = 1/ ( (R_old*sqcdist).sum()/numpy.prod(self.T.shape) ) # beta new
             G_old = self.get_G_array(R_old)
             Phi_G_Phi = numpy.dot(self.Phi.T, numpy.dot(G_old,self.Phi))
             prod_1 = numpy.dot(numpy.linalg.inv(Phi_G_Phi), self.Phi.T)
             prod_2 = numpy.dot(prod_1, R_old)
             W_new = numpy.dot(prod_2, self.T) # W new
-            y = numpy.dot(self.Phi, self.W)
-            sqcdist = scipy.spatial.distance.cdist(y, self.T, 'sqeuclidean')
-            beta_new = 1/ ( (R_old*sqcdist).sum()/numpy.prod(self.T.shape) ) # beta new
             if numpy.isnan(ll):
                 break
             else:
