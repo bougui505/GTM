@@ -26,7 +26,7 @@ class GTM:
         print "Latent space grid (X) shape: %s"%str(self.X.shape)
         # Define the radial basis function network
         self.k = self.nx * self.ny
-        self.Phi = self.radial_basis_function_network(n_center=n_center)
+        self.Phi, self.centers, self.sigma = self.radial_basis_function_network(n_center=n_center)
         print "Size of the radial basis function network (Phi): %s"%str(self.Phi.shape)
         # Initial weigths:
         self.W = self.init_weights(eivec)
@@ -84,12 +84,14 @@ class GTM:
                                      self.X[tuple(centers[0])])
         m = len(centers)
         Phi = numpy.empty((self.k,m))
+        mu_list = []
         for i, center in enumerate(centers):
             center = self.X[tuple(center)]
+            mu_list.append(center)
             phi = self.radial_basis_function(center, radius)
             Phi[:,i] = phi(self.X).flatten()
         Phi = numpy.c_[Phi, self.X.reshape(self.k,2), numpy.ones(self.k)]
-        return numpy.asarray(Phi)
+        return numpy.asarray(Phi), numpy.asarray(mu_list), radius
 
     def init_weights(self, eivec):
         W = numpy.zeros((self.Phi.shape[1],self.T.shape[1]))
