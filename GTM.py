@@ -21,6 +21,7 @@ class GTM:
         self.n, self.d = self.T.shape
         # Set automatic size of the array according to the PCA of the input data
         self.nx, self.ny, eival, eivec = self.get_dim(nx, ny)
+        self.T = numpy.dot(self.T, eivec)
         # Grid of the latent space
         self.X = self.get_grid(self.nx, self.ny)
         print "Latent space grid (X) shape: %s"%str(self.X.shape)
