@@ -108,7 +108,7 @@ class GTM:
     def init_beta(self, W):
         y = numpy.dot(self.Phi,W)
         sqcdist = scipy.spatial.distance.cdist(y,self.T, metric='sqeuclidean')
-        beta = 1/sqcdist.mean()
+        beta = 1/ ( sqcdist.sum()/numpy.prod(self.T.shape) )
         return beta
 
     def get_likelihood(t_n, x_index, W, beta):
