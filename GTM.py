@@ -18,10 +18,11 @@ class GTM:
         • n_center: number of center for the basis functions
         """
         self.T = inputmat - inputmat.mean(axis=0)
+        self.T /= self.T.max()
         self.n, self.d = self.T.shape
         # Set automatic size of the array according to the PCA of the input data
-        self.nx, self.ny, eival, eivec = self.get_dim(nx, ny)
-        self.T = numpy.dot(self.T, eivec)
+        self.nx, self.ny, self.eival, self.eivec = self.get_dim(nx, ny)
+        self.T = numpy.dot(self.T, self.eivec)
         # Grid of the latent space
         self.X = self.get_grid(self.nx, self.ny)
         print "Latent space grid (X) shape: %s"%str(self.X.shape)
@@ -30,7 +31,7 @@ class GTM:
         self.Phi, self.centers, self.sigma = self.radial_basis_function_network(n_center=n_center)
         print "Size of the radial basis function network (Phi): %s"%str(self.Phi.shape)
         # Initial weigths:
-        self.W = self.init_weights(eivec)
+        self.W = self.init_weights(self.eivec)
         print "Size of the matrix of weigths (W): %s"%str(self.W.shape)
         # Projection of the Latent space to the Data space:
         self.y = numpy.dot(self.Phi, self.W)
@@ -43,12 +44,13 @@ class GTM:
         L = self.get_likelihood_array(self.T, self.W, self.beta)
         print "Initial log likelihood value: %.4f"%self.get_log_likelihood(L)
 
-    def get_dim(self, x_dim, y_dim):
+    def get_dim(self, x_dim, y_dim, max_input=1000):
         """
         Return the dimension of the Map accordingly to the 2 first principal components of the dataset t
+        max_input: maximum number of input data points to tke into account for the PCA
         """
-        inputmean = self.T.mean(axis=0)
-        M = self.T - inputmean
+        f = int(self.T.shape[0]/max_input)
+        M = self.T[::f]
         covarray = numpy.dot(M.T,M)
         eival, eivec = numpy.linalg.eigh(covarray)
         args = eival.argsort()[::-1]
@@ -96,7 +98,6 @@ class GTM:
 
     def init_weights(self, eivec):
         W = numpy.zeros((self.Phi.shape[1],self.T.shape[1]))
-        print eivec
         W[-3:-1,:] = eivec[:2]
         y = numpy.dot(self.Phi,W)
         y_var = y.var(axis=0)
