@@ -213,8 +213,8 @@ class GTM:
                 self.W = W_new
                 self.beta = beta_new
                 R_old, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
-            progress.count(report="𝓵 = %.4f | 𝛽 = %.4f"%(ll, self.beta))
             log_likelihood.append(ll)
+            progress.count(report="𝓵 = %.4f | 𝛽 = %.4f"%(ll, self.beta))
         return self.W, self.beta, log_likelihood
 
     def posterior_mode(self):
