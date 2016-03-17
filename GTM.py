@@ -10,7 +10,7 @@ import scipy.spatial.distance
 import progress_reporting as Progress
 
 class GTM:
-    def __init__(self, inputmat, (nx, ny), n_center = 10):
+    def __init__(self, inputmat, (nx, ny), n_center = 10, radius_factor=2):
         """
         • inputmat: input data size: n×d, with n the number of data and d the 
         dimension of the data -> self.T
@@ -25,24 +25,26 @@ class GTM:
         self.T = numpy.dot(self.T, self.eivec)
         # Grid of the latent space
         self.X = self.get_grid(self.nx, self.ny)
-        print "Latent space grid (X) shape: %s"%str(self.X.shape)
         # Define the radial basis function network
         self.k = self.nx * self.ny
-        self.Phi, self.centers, self.sigma = self.radial_basis_function_network(n_center=n_center)
-        print "Size of the radial basis function network (Phi): %s"%str(self.Phi.shape)
+        self.Phi, self.centers, self.sigma = self.radial_basis_function_network(n_center=n_center, radius_factor=radius_factor)
         # Initial weigths:
         self.W = self.init_weights(self.eivec)
-        print "Size of the matrix of weigths (W): %s"%str(self.W.shape)
         # Projection of the Latent space to the Data space:
         self.y = numpy.dot(self.Phi, self.W)
         # Align the center of the data space to the center of the projected latent space (y)
         self.T += self.y.mean(axis=0)
         # Initialize beta (inverse of the variance):
         self.beta = self.init_beta(self.W)
-        print "Initial value for beta: %.4f"%self.beta
         # Give informations about the initial likelihood:
         L = self.get_likelihood_array(self.T, self.W, self.beta)
-        print "Initial log likelihood value: %.4f"%self.get_log_likelihood(L)
+        print "𝑿: %s"%str(self.X.shape)
+        print "𝜱: %s"%str(self.Phi.shape)
+        print "𝞵: %s"%str(self.centers.shape)
+        print "𝜎 = %.4f"%self.sigma
+        print "𝑾: %s"%str(self.W.shape)
+        print "𝛽 = %.4f"%self.beta
+        print "𝓵 = %.4f"%self.get_log_likelihood(L)
 
     def get_dim(self, x_dim, y_dim, max_input=1000):
         """
@@ -59,7 +61,6 @@ class GTM:
         sqev = numpy.sqrt(eival)[:2]
         x_dim, y_dim = map(lambda x: int(round(x)), sqev / (
                            (numpy.prod(sqev) / (x_dim * y_dim)) ** (1. / 2)))
-        print "Size of map will be %dx%d." % (x_dim, y_dim)
         return x_dim, y_dim, eival, eivec
 
     def radial_basis_function(self, center, radius):
@@ -71,7 +72,7 @@ class GTM:
         X = numpy.asarray(numpy.meshgrid(numpy.linspace(0,1,num=x_dim), numpy.linspace(0,1,num=y_dim))).T
         return X
 
-    def radial_basis_function_network(self, n_center):
+    def radial_basis_function_network(self, n_center, radius_factor):
         """
         Return the radial basis function network for a given radius, and the corresponding network X.
         The radius is given in spacing unit: radius×s where s is the spacing of the network
@@ -80,10 +81,9 @@ class GTM:
         factor = int(numpy.sqrt(self.nx*self.ny/n_center))
         num_x = self.nx/factor
         num_y = self.ny/factor
-        print "The number of center for the radial basis functions will be: %d"%(num_x*num_y)
         centers = numpy.asarray(numpy.meshgrid(numpy.linspace(0,self.nx-1,num_x),
                   numpy.linspace(0,self.ny-1,num_y))).T.reshape(num_x*num_y,2)
-        radius = 2*numpy.linalg.norm(self.X[tuple(centers[1])] -
+        radius = radius_factor*numpy.linalg.norm(self.X[tuple(centers[1])] -
                                      self.X[tuple(centers[0])])
         m = len(centers)
         Phi = numpy.empty((self.k,m))
@@ -213,7 +213,7 @@ class GTM:
                 self.W = W_new
                 self.beta = beta_new
                 R_old, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
-            progress.count(report="log-likelihood: %.3f | beta: %.3f"%(ll, self.beta))
+            progress.count(report="𝓵 = %.4f | 𝛽 = %.4f"%(ll, self.beta))
             log_likelihood.append(ll)
         return self.W, self.beta, log_likelihood
 
