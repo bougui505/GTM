@@ -178,10 +178,10 @@ class GTM:
         D = W.shape[1]
         y = numpy.dot(self.Phi, W)
         sqcdist = scipy.spatial.distance.cdist(y, t, 'sqeuclidean')
-        L = (beta/(2*numpy.pi))**(D/2.)*numpy.exp(-(beta/2)*sqcdist)
+        L = numpy.exp(-(beta/2)*sqcdist)
         E = L.sum(axis=0)
         R = L / E
-        ll = self.get_log_likelihood(L)
+        ll = numpy.log( (self.beta/(2*numpy.pi))**(self.d/2.)*L.sum(axis=0)/self.k ).sum()
         return R, sqcdist, ll
 
     def get_G_array(self, R):
