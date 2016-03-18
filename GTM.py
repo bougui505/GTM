@@ -10,7 +10,7 @@ import scipy.spatial.distance
 import progress_reporting as Progress
 
 class GTM:
-    def __init__(self, inputmat, (nx, ny), n_center = 10, radius_factor=2, beta_factor = 2):
+    def __init__(self, inputmat, (nx, ny), n_center = 10, sigma=2, beta_factor = 2):
         """
 
         • inputmat: input data size: n×d, with n the number of data and d the 
@@ -20,9 +20,7 @@ class GTM:
 
         • n_center: number of center for the basis functions
 
-        • radius_factor: factor to scale the sigma value for the radial basis
-        function (sigma=(d*radius_factor)**2, where d is the distance between two
-        adjacent centers)
+        • sigma: radius for the radial basis factors
 
         • beta_factor: factor to scale the beta initialization (beta_factor =
         (sigma_mapping/sigma_data)**2)
@@ -38,7 +36,7 @@ class GTM:
         self.X = self.get_grid(self.nx, self.ny)
         # Define the radial basis function network
         self.k = self.nx * self.ny
-        self.Phi, self.centers, self.sigma = self.radial_basis_function_network(n_center=n_center, radius_factor=radius_factor)
+        self.Phi, self.centers, self.sigma = self.radial_basis_function_network(n_center=n_center, sigma=float(sigma))
         # Initial weigths:
         self.W = self.init_weights(self.eivec)
         # Projection of the Latent space to the Data space:
@@ -86,7 +84,7 @@ class GTM:
         X = numpy.asarray(numpy.meshgrid(numpy.linspace(0,1,num=x_dim), numpy.linspace(0,1,num=y_dim))).T
         return X
 
-    def radial_basis_function_network(self, n_center, radius_factor):
+    def radial_basis_function_network(self, n_center, sigma):
         """
         Return the radial basis function network for a given radius, and the corresponding network X.
         The radius is given in spacing unit: radius×s where s is the spacing of the network
@@ -97,8 +95,7 @@ class GTM:
         num_y = self.ny/factor
         centers = numpy.asarray(numpy.meshgrid(numpy.linspace(0,self.nx-1,num_x),
                   numpy.linspace(0,self.ny-1,num_y))).T.reshape(num_x*num_y,2)
-        radius = radius_factor*numpy.linalg.norm(self.X[tuple(centers[1])] -
-                                     self.X[tuple(centers[0])])
+        radius = sigma
         m = len(centers)
         Phi = numpy.empty((self.k,m))
         mu_list = []
