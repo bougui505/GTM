@@ -43,7 +43,10 @@ class GTM:
         print "𝞵: %s"%str(self.centers.shape)
         print "𝜎 = %.4f"%self.sigma
         print "𝑾: %s"%str(self.W.shape)
-        print "𝛽 = %.4f"%self.beta
+        sigma_mapping = numpy.sqrt(self.d/self.beta)
+        self.sigma_data = numpy.linalg.norm(self.T.std(axis=0))
+        sigma_mapping_normalized = sigma_mapping / self.sigma_data
+        print "𝛽 = %.4f | 𝜎_mapping = %.4f | 𝜎_mapping/𝜎_data = %.4f"%(self.beta, sigma_mapping, sigma_mapping_normalized)
         print "𝓵 = %.4f"%self.get_log_likelihood(L)
 
     def get_dim(self, x_dim, y_dim, max_input=1000):
@@ -108,7 +111,7 @@ class GTM:
     def init_beta(self, W):
         y = numpy.dot(self.Phi,W)
         sqcdist = scipy.spatial.distance.cdist(y,self.T, metric='sqeuclidean')
-        beta = 1/ ( sqcdist.sum()/numpy.prod(self.T.shape) )
+        beta = 1/ ( 2*sqcdist.sum()/(numpy.prod(self.T.shape)*self.k) )
         return beta
 
     def get_likelihood(t_n, x_index, W, beta):
@@ -214,7 +217,9 @@ class GTM:
                 self.beta = beta_new
                 R_old, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
             log_likelihood.append(ll)
-            progress.count(report="𝓵 = %.4f | 𝛽 = %.4f"%(ll, self.beta))
+            sigma_mapping = numpy.sqrt(self.d/self.beta)
+            sigma_mapping_normalized = sigma_mapping / self.sigma_data
+            progress.count(report="𝓵 = %.4f | 𝛽 = %.4f | 𝜎_mapping = %.4f | 𝜎_mapping/𝜎_data = %.4f"%(ll, self.beta, sigma_mapping, sigma_mapping_normalized))
         return self.W, self.beta, log_likelihood
 
     def posterior_mode(self):
