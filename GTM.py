@@ -10,12 +10,23 @@ import scipy.spatial.distance
 import progress_reporting as Progress
 
 class GTM:
-    def __init__(self, inputmat, (nx, ny), n_center = 10, radius_factor=2):
+    def __init__(self, inputmat, (nx, ny), n_center = 10, radius_factor=2, beta_factor = 2):
         """
+
         • inputmat: input data size: n×d, with n the number of data and d the 
         dimension of the data -> self.T
+
         • nx, ny: dimension of the latent space (number of cells)
+
         • n_center: number of center for the basis functions
+
+        • radius_factor: factor to scale the sigma value for the radial basis
+        function (sigma=(d*radius_factor)**2, where d is the distance between two
+        adjacent centers)
+
+        • beta_factor: factor to scale the beta initialization (beta_factor =
+        (sigma_mapping/sigma_data)**2)
+
         """
         self.T = inputmat - inputmat.mean(axis=0)
         self.T /= self.T.max()
@@ -35,7 +46,7 @@ class GTM:
         # Align the center of the data space to the center of the projected latent space (y)
         self.T += self.y.mean(axis=0)
         # Initialize beta (inverse of the variance):
-        self.beta = self.init_beta(self.W)
+        self.beta = self.init_beta(self.W, factor = beta_factor)
         # Give informations about the initial likelihood:
         L = self.get_likelihood_array(self.T, self.W, self.beta)
         print "𝑿: %s"%str(self.X.shape)
@@ -108,10 +119,14 @@ class GTM:
         W = W*numpy.sqrt(data_var)/numpy.sqrt(y_var)
         return W
 
-    def init_beta(self, W):
+    def init_beta(self, W, factor):
+        """
+        factor is a scalar to scale the beta value.
+        factor = (sigma_mapping/sigma_data)**2
+        """
         y = numpy.dot(self.Phi,W)
         sqcdist = scipy.spatial.distance.cdist(y,self.T, metric='sqeuclidean')
-        beta = 1/ ( 2*sqcdist.sum()/(numpy.prod(self.T.shape)*self.k) )
+        beta = 1/ ( factor*sqcdist.sum()/(numpy.prod(self.T.shape)*self.k) )
         return beta
 
     def get_likelihood(t_n, x_index, W, beta):
@@ -204,18 +219,18 @@ class GTM:
         R_old, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
         print "Starting Log-likelihood: %.4f"%ll
         for i in range(n_iterations):
+            if numpy.isnan(R_old).any():
+                print "There is %d/%d NaN elements in 𝐑. Try to increase beta_factor (noise)..."%(numpy.isnan(R_old).sum(), R_old.size)
+                break
             beta_new = 1/ ( (R_old*sqcdist).sum()/numpy.prod(self.T.shape) ) # beta new
             G_old = self.get_G_array(R_old)
             Phi_G_Phi = numpy.dot(self.Phi.T, numpy.dot(G_old,self.Phi))
             prod_1 = numpy.dot(numpy.linalg.inv(Phi_G_Phi), self.Phi.T)
             prod_2 = numpy.dot(prod_1, R_old)
             W_new = numpy.dot(prod_2, self.T) # W new
-            if numpy.isnan(ll):
-                break
-            else:
-                self.W = W_new
-                self.beta = beta_new
-                R_old, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
+            self.W = W_new
+            self.beta = beta_new
+            R_old, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
             log_likelihood.append(ll)
             sigma_mapping = numpy.sqrt(self.d/self.beta)
             sigma_mapping_normalized = sigma_mapping / self.sigma_data
