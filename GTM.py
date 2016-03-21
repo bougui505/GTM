@@ -10,7 +10,7 @@ import scipy.spatial.distance
 import progress_reporting as Progress
 
 class GTM:
-    def __init__(self, inputmat, (nx, ny), n_center = 10, sigma=2, beta_factor = 2):
+    def __init__(self, inputmat, (nx, ny), n_center = 10, sigma=2, alpha = 0., beta_factor = 2):
         """
 
         • inputmat: input data size: n×d, with n the number of data and d the 
@@ -21,6 +21,8 @@ class GTM:
         • n_center: number of center for the basis functions
 
         • sigma: radius for the radial basis factors
+
+        • alpha: 1/(variance) of the weight (W)
 
         • beta_factor: factor to scale the beta initialization (beta_factor =
         (sigma_mapping/sigma_data)**2)
@@ -43,6 +45,8 @@ class GTM:
         self.y = numpy.dot(self.Phi, self.W)
         # Align the center of the data space to the center of the projected latent space (y)
         self.T += self.y.mean(axis=0)
+        # 1/(variance) of the weight (𝛼)
+        self.alpha = alpha
         # Initialize beta (inverse of the variance):
         self.beta = self.init_beta(self.W, factor = beta_factor)
         # Give informations about the initial likelihood:
@@ -50,13 +54,14 @@ class GTM:
         print "𝑿: %s"%str(self.X.shape)
         print "𝜱: %s"%str(self.Phi.shape)
         print "𝞵: %s"%str(self.centers.shape)
-        print "𝜎 = %.4f"%self.sigma
+        print "𝜎 = %.4g"%self.sigma
         print "𝑾: %s"%str(self.W.shape)
+        print "𝛼 = %.4g"%self.alpha
         sigma_mapping = numpy.sqrt(self.d/self.beta)
         self.sigma_data = numpy.linalg.norm(self.T.std(axis=0))
         sigma_mapping_normalized = sigma_mapping / self.sigma_data
-        print "𝛽 = %.4f | 𝜎_mapping = %.4f | 𝜎_mapping/𝜎_data = %.4f"%(self.beta, sigma_mapping, sigma_mapping_normalized)
-        print "𝓵 = %.4f"%self.get_log_likelihood(L)
+        print "𝛽 = %.4g | 𝜎_mapping = %.4g | 𝜎_mapping/𝜎_data = %.4g"%(self.beta, sigma_mapping, sigma_mapping_normalized)
+        print "𝓵 = %.4g"%self.get_log_likelihood(L)
 
     def get_dim(self, x_dim, y_dim, max_input=1000):
         """
@@ -214,14 +219,15 @@ class GTM:
         log_likelihood = []
         progress = Progress.Progress(n_iterations, delta=10)
         R_old, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
-        print "Starting Log-likelihood: %.4f"%ll
+        print "Starting Log-likelihood: %.4g"%ll
         for i in range(n_iterations):
             if numpy.isnan(R_old).any():
                 print "There is %d/%d NaN elements in 𝐑. Try to increase beta_factor (noise)..."%(numpy.isnan(R_old).sum(), R_old.size)
                 break
             beta_new = 1/ ( (R_old*sqcdist).sum()/numpy.prod(self.T.shape) ) # beta new
             G_old = self.get_G_array(R_old)
-            Phi_G_Phi = numpy.dot(self.Phi.T, numpy.dot(G_old,self.Phi))
+            lambda_factor = self.alpha / self.beta
+            Phi_G_Phi = numpy.dot(self.Phi.T, numpy.dot(G_old,self.Phi)) - lambda_factor * numpy.identity(self.Phi.shape[1])
             prod_1 = numpy.dot(numpy.linalg.inv(Phi_G_Phi), self.Phi.T)
             prod_2 = numpy.dot(prod_1, R_old)
             W_new = numpy.dot(prod_2, self.T) # W new
@@ -231,7 +237,7 @@ class GTM:
             log_likelihood.append(ll)
             sigma_mapping = numpy.sqrt(self.d/self.beta)
             sigma_mapping_normalized = sigma_mapping / self.sigma_data
-            progress.count(report="𝓵 = %.4f | 𝛽 = %.4f | 𝜎_mapping = %.4f | 𝜎_mapping/𝜎_data = %.4f"%(ll, self.beta, sigma_mapping, sigma_mapping_normalized))
+            progress.count(report="𝓵 = %.4g | 𝛽 = %.4g | 𝜎_mapping = %.4g | 𝜎_mapping/𝜎_data = %.4g"%(ll, self.beta, sigma_mapping, sigma_mapping_normalized))
         return self.W, self.beta, log_likelihood
 
     def posterior_mode(self):
