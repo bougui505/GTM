@@ -206,7 +206,7 @@ class GTM:
         # Real value of log-likelihood
         #ll = self.n*numpy.log( (1./self.k) * (beta/(2*numpy.pi))**(self.d/2.)) + logE.sum()
         # Tracking value of log-likelihood
-        ll = numpy.log(beta/(2*numpy.pi)) + logE.sum()
+        ll = (self.n*self.d/2)*numpy.log(beta/(2*numpy.pi)) + logE.sum()
         return logR, sqcdist, ll
 
     def get_G_array(self, logR):
