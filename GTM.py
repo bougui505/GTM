@@ -51,7 +51,7 @@ class GTM:
         # Initialize beta (inverse of the variance):
         self.beta = self.init_beta(self.W, factor = beta_factor)
         # Give informations about the initial likelihood:
-        L = self.get_likelihood_array(self.T, self.W, self.beta)
+        logR, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
         print "𝙏: %s"%str(self.T.shape)
         print "𝑿: %s"%str(self.X.shape)
         print "𝜱: %s"%str(self.Phi.shape)
@@ -63,7 +63,7 @@ class GTM:
         self.sigma_data = numpy.linalg.norm(self.T.std(axis=0))
         sigma_mapping_normalized = sigma_mapping / self.sigma_data
         print "𝛽 = %.4g | 𝜎_mapping = %.4g | 𝜎_mapping/𝜎_data = %.4g"%(self.beta, sigma_mapping, sigma_mapping_normalized)
-        print "𝓵 = %.4g"%self.get_log_likelihood(L)
+        print "𝓵 = %.4g"%ll
 
     def get_dim(self, x_dim, y_dim, max_input=1000):
         """
@@ -77,7 +77,7 @@ class GTM:
         args = eival.argsort()[::-1]
         eival = eival[args]
         eivec = eivec[:, args]
-        sqev = numpy.sqrt(eival)[:2]
+        sqev = numpy.sqrt(eival[:2])
         x_dim, y_dim = map(lambda x: int(round(x)), sqev / (
                            (numpy.prod(sqev) / (x_dim * y_dim)) ** (1. / 2)))
         return x_dim, y_dim, eival, eivec
@@ -203,7 +203,10 @@ class GTM:
         logL = -(beta/2)*sqcdist
         logE = scipy.misc.logsumexp(-beta/2 * sqcdist, axis=0)
         logR = logL - logE
-        ll = self.n*numpy.log( (1./self.k) * (beta/(2*numpy.pi))**(self.d/2.)) + logE.sum()
+        # Real value of log-likelihood
+        #ll = self.n*numpy.log( (1./self.k) * (beta/(2*numpy.pi))**(self.d/2.)) + logE.sum()
+        # Tracking value of log-likelihood
+        ll = numpy.log(beta/(2*numpy.pi)) + logE.sum()
         return logR, sqcdist, ll
 
     def get_G_array(self, logR):
