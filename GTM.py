@@ -7,6 +7,7 @@
 
 import numpy
 import scipy.spatial.distance
+import scipy.misc
 import progress_reporting as Progress
 
 class GTM:
@@ -199,42 +200,45 @@ class GTM:
         D = W.shape[1]
         y = numpy.dot(self.Phi, W)
         sqcdist = scipy.spatial.distance.cdist(y, t, 'sqeuclidean')
-        L = numpy.exp(-(beta/2)*sqcdist)
-        E = L.sum(axis=0)
-        R = L / E
-        ll = numpy.log( (self.beta/(2*numpy.pi))**(self.d/2.)*L.sum(axis=0)/self.k ).sum()
-        return R, sqcdist, ll
+        logL = -(beta/2)*sqcdist
+        logE = scipy.misc.logsumexp(-beta/2 * sqcdist, axis=0)
+        logR = logL - logE
+        ll = self.n*numpy.log( (1./self.k) * (beta/(2*numpy.pi))**(self.d/2.)) + logE.sum()
+        return logR, sqcdist, ll
 
-    def get_G_array(self, R):
+    def get_G_array(self, logR):
         """
         Diagonal matrix of size K×K
         input:
         - R: matrix returned by get_posterior_array
         """
-        K = R.shape[0]
+        K = logR.shape[0]
         G = numpy.zeros((K,K))
-        numpy.fill_diagonal(G, R.sum(axis=1))
+        numpy.fill_diagonal(G, numpy.exp(scipy.misc.logsumexp(logR, axis=1)))
         return G
 
     def learn(self, n_iterations):
         log_likelihood = []
         progress = Progress.Progress(n_iterations, delta=10)
-        R_old, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
+        logR, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
+        R = numpy.exp(logR)
         print "Starting Log-likelihood: %.4g"%ll
         for i in range(n_iterations):
-            if numpy.isnan(R_old).any():
+            if numpy.isnan(R).any():
                 print "There is %d/%d NaN elements in 𝐑. Try to increase beta_factor (noise)..."%(numpy.isnan(R_old).sum(), R_old.size)
                 break
-            beta_new = 1/ ( (R_old*sqcdist).sum()/numpy.prod(self.T.shape) ) # beta new
-            G_old = self.get_G_array(R_old)
+            logbeta = numpy.log(self.n*self.d) - scipy.misc.logsumexp(logR+numpy.log(sqcdist))
+            beta = numpy.exp(logbeta)
+            G = self.get_G_array(logR)
             lambda_factor = self.alpha / self.beta
-            Phi_G_Phi = numpy.dot(self.Phi.T, numpy.dot(G_old,self.Phi)) - lambda_factor * numpy.identity(self.Phi.shape[1])
+            Phi_G_Phi = numpy.dot(self.Phi.T, numpy.dot(G,self.Phi)) - lambda_factor * numpy.identity(self.Phi.shape[1])
             prod_1 = numpy.dot(numpy.linalg.inv(Phi_G_Phi), self.Phi.T)
-            prod_2 = numpy.dot(prod_1, R_old)
-            W_new = numpy.dot(prod_2, self.T) # W new
-            self.W = W_new
-            self.beta = beta_new
-            R_old, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
+            prod_2 = numpy.dot(prod_1, R)
+            W = numpy.dot(prod_2, self.T) # W new
+            self.W = W
+            self.beta = beta
+            logR, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
+            R = numpy.exp(logR)
             log_likelihood.append(ll)
             sigma_mapping = numpy.sqrt(self.d/self.beta)
             sigma_mapping_normalized = sigma_mapping / self.sigma_data
@@ -246,7 +250,8 @@ class GTM:
         Return the posterior mode projection:
         x_n = argmax_{x_k}(p(x_k|t_n))
         """
-        R, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
+        logR, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
+        R = numpy.exp(logR)
         posterior_mode = numpy.asarray([numpy.unravel_index(e, (self.nx, self.ny)) for e in R.argmax(axis=0)])
         return posterior_mode
 
@@ -255,6 +260,7 @@ class GTM:
         Return the posterior mean projection:
         x_n = sum_k(x_k.p(x_k|t_n))
         """
-        R, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
+        logR, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
+        R = numpy.exp(logR)
         posterior_mean = numpy.dot(R.T, self.X.reshape(self.nx * self.ny, 2))
         return posterior_mean
