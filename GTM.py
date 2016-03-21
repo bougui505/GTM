@@ -29,11 +29,11 @@ class GTM:
 
         """
         self.T = inputmat - inputmat.mean(axis=0)
-        self.T /= self.T.max()
         self.n, self.d = self.T.shape
         # Set automatic size of the array according to the PCA of the input data
         self.nx, self.ny, self.eival, self.eivec = self.get_dim(nx, ny)
         self.T = numpy.dot(self.T, self.eivec)
+        self.T /= self.T.max()
         # Grid of the latent space
         self.X = self.get_grid(self.nx, self.ny)
         # Define the radial basis function network
@@ -115,7 +115,7 @@ class GTM:
 
     def init_weights(self, eivec):
         W = numpy.zeros((self.Phi.shape[1],self.T.shape[1]))
-        W[-3:-1,:] = eivec[:2]
+        W[-3:-1,:] = eivec[:,:2].T
         y = numpy.dot(self.Phi,W)
         y_var = y.var(axis=0)
         data_var = self.T.var(axis=0)
