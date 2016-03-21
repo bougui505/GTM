@@ -51,6 +51,7 @@ class GTM:
         self.beta = self.init_beta(self.W, factor = beta_factor)
         # Give informations about the initial likelihood:
         L = self.get_likelihood_array(self.T, self.W, self.beta)
+        print "𝙏: %s"%str(self.T.shape)
         print "𝑿: %s"%str(self.X.shape)
         print "𝜱: %s"%str(self.Phi.shape)
         print "𝞵: %s"%str(self.centers.shape)
