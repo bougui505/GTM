@@ -27,11 +27,11 @@ class GTM:
 
         """
         self.T = inputmat - inputmat.mean(axis=0)
+        self.T /= numpy.linalg.norm(self.T, axis=1).max()
         self.n, self.d = self.T.shape
         # Set automatic size of the array according to the PCA of the input data
         self.nx, self.ny, self.eival, self.eivec = self.get_dim(nx, ny)
         self.T = numpy.dot(self.T, self.eivec)
-        self.T /= self.T.max()
         # Grid of the latent space
         self.X = self.get_grid(self.nx, self.ny)
         # Define the radial basis function network
@@ -41,8 +41,6 @@ class GTM:
         self.W = self.init_weights(self.eivec)
         # Projection of the Latent space to the Data space:
         self.y = numpy.dot(self.Phi, self.W)
-        # Align the center of the data space to the center of the projected latent space (y)
-        self.T += self.y.mean(axis=0)
         # 1/(variance) of the weight (𝛼)
         self.alpha = alpha
         # Initialize beta (inverse of the variance):
@@ -84,7 +82,8 @@ class GTM:
         return lambda x: numpy.exp(-(beta/2) * ((x - center)**2).sum(axis=-1))
 
     def get_grid(self, x_dim, y_dim):
-        X = numpy.asarray(numpy.meshgrid(numpy.linspace(0,1,num=x_dim), numpy.linspace(0,1,num=y_dim))).T
+        x_norm, y_norm = numpy.sqrt(self.eival[0]), numpy.sqrt(self.eival[1])
+        X = numpy.asarray(numpy.meshgrid(numpy.linspace(-x_norm/2, x_norm/2,num=x_dim), numpy.linspace(-y_norm/2,y_norm/2,num=y_dim))).T
         return X
 
     def radial_basis_function_network(self, n_center, sigma):
