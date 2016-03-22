@@ -11,7 +11,7 @@ import scipy.misc
 import progress_reporting as Progress
 
 class GTM:
-    def __init__(self, inputmat, (nx, ny), n_center = 10, sigma=2, alpha = 0., beta_factor = 2):
+    def __init__(self, inputmat, (nx, ny), n_center = 10, sigma=2, alpha = 0.):
         """
 
         • inputmat: input data size: n×d, with n the number of data and d the 
@@ -24,9 +24,6 @@ class GTM:
         • sigma: radius for the radial basis factors
 
         • alpha: 1/(variance) of the weight (W)
-
-        • beta_factor: factor to scale the beta initialization (beta_factor =
-        (sigma_mapping/sigma_data)**2)
 
         """
         self.T = inputmat - inputmat.mean(axis=0)
@@ -49,7 +46,7 @@ class GTM:
         # 1/(variance) of the weight (𝛼)
         self.alpha = alpha
         # Initialize beta (inverse of the variance):
-        self.beta = self.init_beta(self.W, factor = beta_factor)
+        self.beta = self.init_beta()
         # Give informations about the initial likelihood:
         logR, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
         print "𝙏: %s"%str(self.T.shape)
@@ -123,14 +120,10 @@ class GTM:
         W = W*numpy.sqrt(data_var)/numpy.sqrt(y_var)
         return W
 
-    def init_beta(self, W, factor):
+    def init_beta(self):
         """
-        factor is a scalar to scale the beta value.
-        factor = (sigma_mapping/sigma_data)**2
         """
-        y = numpy.dot(self.Phi,W)
-        sqcdist = scipy.spatial.distance.cdist(y,self.T, metric='sqeuclidean')
-        beta = 1/ ( factor*sqcdist.sum()/(numpy.prod(self.T.shape)*self.k) )
+        beta = 1/max((numpy.linalg.norm(self.y[1] - self.y[0])/2)**2, self.eival[2])
         return beta
 
     def get_likelihood(t_n, x_index, W, beta):
@@ -228,7 +221,7 @@ class GTM:
         print "Starting Log-likelihood: %.4g"%ll
         for i in range(n_iterations):
             if numpy.isnan(R).any():
-                print "There is %d/%d NaN elements in 𝐑. Try to increase beta_factor (noise)..."%(numpy.isnan(R_old).sum(), R_old.size)
+                print "There is %d/%d NaN elements in 𝐑."%(numpy.isnan(R_old).sum(), R_old.size)
                 break
             logbeta = numpy.log(self.n*self.d) - scipy.misc.logsumexp(logR+numpy.log(sqcdist))
             beta = numpy.exp(logbeta)
