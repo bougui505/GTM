@@ -213,9 +213,9 @@ class GTM:
         numpy.fill_diagonal(G, numpy.exp(scipy.misc.logsumexp(logR, axis=1)))
         return G
 
-    def learn(self, n_iterations):
+    def learn(self, n_iterations, report_interval = 10):
         log_likelihood = []
-        progress = Progress.Progress(n_iterations, delta=10)
+        progress = Progress.Progress(n_iterations, delta = report_interval)
         logR, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
         R = numpy.exp(logR)
         print "Starting Log-likelihood: %.4g"%ll
