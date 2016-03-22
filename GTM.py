@@ -62,13 +62,12 @@ class GTM:
         print "𝛽 = %.4g | 𝜎_mapping = %.4g | 𝜎_mapping/𝜎_data = %.4g"%(self.beta, sigma_mapping, sigma_mapping_normalized)
         print "𝓵 = %.4g"%ll
 
-    def get_dim(self, x_dim, y_dim, max_input=1000):
+    def get_dim(self, x_dim, y_dim):
         """
         Return the dimension of the Map accordingly to the 2 first principal components of the dataset t
         max_input: maximum number of input data points to tke into account for the PCA
         """
-        f = int(self.T.shape[0]/max_input)
-        M = self.T[::f]
+        M = self.T
         covarray = numpy.dot(M.T,M)
         eival, eivec = numpy.linalg.eigh(covarray)
         args = eival.argsort()[::-1]
