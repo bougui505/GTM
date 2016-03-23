@@ -241,7 +241,7 @@ class GTM:
             log_likelihood.append(ll)
             sigma_mapping = numpy.sqrt(self.d/self.beta)
             sigma_mapping_normalized = sigma_mapping / self.sigma_data
-            sigma_w = numpy.linalg.norm(self.W, axis=0).var()
+            sigma_w = numpy.linalg.norm(self.W, axis=1).var()
             progress.count(report="𝓵 = %.4g | 𝛽 = %.4g | 𝜎_mapping = %.4g | 𝜎_mapping/𝜎_data = %.4g | 𝜎_𝑾 = %.4g"%(ll, self.beta, sigma_mapping, sigma_mapping_normalized, sigma_w))
         return self.W, self.beta, log_likelihood
 
