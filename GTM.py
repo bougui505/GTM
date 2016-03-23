@@ -92,17 +92,22 @@ class GTM:
         The radius is given in spacing unit: radius×s where s is the spacing of the network
         The number of centers is n_center
         """
-        factor = int(numpy.sqrt(self.nx*self.ny/n_center))
-        num_x = self.nx/factor
-        num_y = self.ny/factor
-        centers = numpy.asarray(numpy.meshgrid(numpy.linspace(0,self.nx-1,num_x),
-                  numpy.linspace(0,self.ny-1,num_y))).T.reshape(num_x*num_y,2)
+        h, w, d =  self.X.shape
+        n = n_center
+        n_x = round(numpy.sqrt(w*n/h + (w-h)**2/(4*h**2)) - (w-h)/(2*h))
+        n_y = round(n/n_x)
+        delta_x = h/n_x
+        delta_y = w/n_y
+        centers = []
+        for x in numpy.arange(delta_x/2,h+delta_x/2,delta_x):
+            for y in numpy.arange(delta_y/2,w+delta_y/2,delta_y):
+                centers.append((round(x)-1, round(y)-1))
         radius = sigma
         m = len(centers)
         Phi = numpy.empty((self.k,m))
         mu_list = []
         for i, center in enumerate(centers):
-            center = self.X[tuple(center)]
+            center = self.X[center]
             mu_list.append(center)
             phi = self.radial_basis_function(center, radius)
             Phi[:,i] = phi(self.X).flatten()
