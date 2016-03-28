@@ -205,7 +205,7 @@ class GTM:
         ll = (self.n*self.d/2)*numpy.log(beta/(2*numpy.pi)) + logE.sum()
         return logR, sqcdist, ll
 
-    def get_density(self, t, W, beta):
+    def get_log_density(self, t, W, beta):
         """
         Density estimation of the data in the latent space
         """
@@ -213,8 +213,9 @@ class GTM:
         logE = (self.d/2)*numpy.log(beta/(2*numpy.pi)) + \
                 scipy.misc.logsumexp((-beta/2) * sqcdist, axis=0) - \
                  numpy.log(self.k) # evidence (p(t))
-        density = numpy.exp(scipy.misc.logsumexp(logR+logE, axis=1))
-        return density
+        log_density = scipy.misc.logsumexp(logR+logE, axis=1)
+        log_density -= scipy.misc.logsumexp(log_density) # normalization factor such as density.sum() == 1
+        return log_density
 
     def get_G_array(self, logR):
         """
