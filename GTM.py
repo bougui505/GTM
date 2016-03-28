@@ -205,6 +205,17 @@ class GTM:
         ll = (self.n*self.d/2)*numpy.log(beta/(2*numpy.pi)) + logE.sum()
         return logR, sqcdist, ll
 
+    def get_density(self, t, W, beta):
+        """
+        Density estimation of the data in the latent space
+        """
+        logR, sqcdist, ll = self.get_posterior_array(t, W, beta)
+        logE = (self.d/2)*numpy.log(beta/(2*numpy.pi)) + \
+                scipy.misc.logsumexp((-beta/2) * sqcdist, axis=0) - \
+                 numpy.log(self.k) # evidence (p(t))
+        density = numpy.exp(scipy.misc.logsumexp(logR+logE, axis=1))
+        return density
+
     def get_G_array(self, logR):
         """
         Diagonal matrix of size K×K
