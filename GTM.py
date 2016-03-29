@@ -222,6 +222,15 @@ class GTM:
         log_density -= scipy.misc.logsumexp(log_density) # normalization factor such as density.sum() == 1
         return log_density.reshape((self.nx, self.ny))
 
+    def project_data(self, data):
+        """
+        Project the data onto the map
+        """
+        logR, sqcdist, ll = self.logR, self.sqcdist, self.ll
+        R = numpy.exp(logR)
+        data_map = (R*data).sum(axis=1)/ R.sum(axis=1)
+        return data_map.reshape((self.nx, self.ny))
+
     def get_G_array(self, logR):
         """
         Diagonal matrix of size K×K
