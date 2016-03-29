@@ -268,6 +268,30 @@ class GTM:
         pickle.dump(data, f, 2)
         f.close()
 
+    def load_data(self, infile='gtm.dat'):
+        data_dict = numpy.load(infile)
+        #keys: ['sqcdist', 'Phi', 'logR', 'd', 'sigma_data', 'll', 'eival', 'centers', 'nx', 'ny', 'beta', 'eivec', 'T', 'W', 'X', 'y', 'alpha', 'n', 'sigma', 'k']:
+        self.sqcdist = data_dict['sqcdist']
+        self.Phi = data_dict['Phi']
+        self.logR = data_dict['logR']
+        self.d = data_dict['d']
+        self.sigma_data = data_dict['sigma_data']
+        self.ll = data_dict['ll']
+        self.eival = data_dict['eival']
+        self.centers = data_dict['centers']
+        self.nx = data_dict['nx']
+        self.ny = data_dict['ny']
+        self.beta = data_dict['beta']
+        self.eivec = data_dict['eivec']
+        self.T = data_dict['T']
+        self.W = data_dict['W']
+        self.X = data_dict['X']
+        self.y = data_dict['y']
+        self.alpha = data_dict['alpha']
+        self.n = data_dict['n']
+        self.sigma = data_dict['sigma']
+        self.k = data_dict['k']
+
     def posterior_mode(self):
         """
         Return the posterior mode projection:
