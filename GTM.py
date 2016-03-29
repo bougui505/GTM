@@ -9,6 +9,7 @@ import numpy
 import scipy.spatial.distance
 import scipy.misc
 import progress_reporting as Progress
+import pickle
 
 class GTM:
     def __init__(self, inputmat, (nx, ny), n_center = 10, sigma=None, alpha = 0.):
@@ -259,6 +260,12 @@ class GTM:
             sigma_w = numpy.linalg.norm(self.W, axis=1).var()
             progress.count(report="𝓵 = %.4g | 𝛽 = %.4g | 𝜎_mapping = %.4g | 𝜎_mapping/𝜎_data = %.4g | 𝜎_𝑾 = %.4g"%(ll, self.beta, sigma_mapping, sigma_mapping_normalized, sigma_w))
         return self.W, self.beta, log_likelihood
+
+    def save_data(self, outfile='gtm.dat'):
+        data = self.__dict__
+        f = open(outfile,'wb')
+        pickle.dump(data, f, 2)
+        f.close()
 
     def posterior_mode(self):
         """
