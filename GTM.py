@@ -215,7 +215,7 @@ class GTM:
                  numpy.log(self.k) # evidence (p(t))
         log_density = scipy.misc.logsumexp(logR+logE, axis=1)
         log_density -= scipy.misc.logsumexp(log_density) # normalization factor such as density.sum() == 1
-        return log_density
+        return log_density.reshape((self.nx, self.ny))
 
     def get_G_array(self, logR):
         """
