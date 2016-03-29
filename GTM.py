@@ -207,13 +207,14 @@ class GTM:
         #ll = self.n*numpy.log( (1./self.k) * (beta/(2*numpy.pi))**(self.d/2.)) + logE.sum()
         # Tracking value of log-likelihood
         ll = (self.n*self.d/2)*numpy.log(beta/(2*numpy.pi)) + logE.sum()
+        self.logR, self.sqcdist, self.ll = logR, sqcdist, ll
         return logR, sqcdist, ll
 
     def get_log_density(self, t, W, beta):
         """
         Density estimation of the data in the latent space
         """
-        logR, sqcdist, ll = self.get_posterior_array(t, W, beta)
+        logR, sqcdist, ll = self.logR, self.sqcdist, self.ll
         logE = (self.d/2)*numpy.log(beta/(2*numpy.pi)) + \
                 scipy.misc.logsumexp((-beta/2) * sqcdist, axis=0) - \
                  numpy.log(self.k) # evidence (p(t))
@@ -272,7 +273,7 @@ class GTM:
         Return the posterior mode projection:
         x_n = argmax_{x_k}(p(x_k|t_n))
         """
-        logR, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
+        logR, sqcdist, ll = self.logR, self.sqcdist, self.ll
         R = numpy.exp(logR)
         posterior_mode = numpy.asarray([numpy.unravel_index(e, (self.nx, self.ny)) for e in R.argmax(axis=0)])
         return posterior_mode
@@ -282,7 +283,7 @@ class GTM:
         Return the posterior mean projection:
         x_n = sum_k(x_k.p(x_k|t_n))
         """
-        logR, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
+        logR, sqcdist, ll = self.logR, self.sqcdist, self.ll
         R = numpy.exp(logR)
         posterior_mean = numpy.dot(R.T, self.X.reshape(self.nx * self.ny, 2))
         return posterior_mean
