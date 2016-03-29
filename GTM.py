@@ -11,7 +11,7 @@ import scipy.misc
 import progress_reporting as Progress
 
 class GTM:
-    def __init__(self, inputmat, (nx, ny), n_center = 10, sigma=2, alpha = 0.):
+    def __init__(self, inputmat, (nx, ny), n_center = 10, sigma=None, alpha = 0.):
         """
 
         • inputmat: input data size: n×d, with n the number of data and d the 
@@ -36,7 +36,7 @@ class GTM:
         self.X = self.get_grid(self.nx, self.ny)
         # Define the radial basis function network
         self.k = self.nx * self.ny
-        self.Phi, self.centers, self.sigma = self.radial_basis_function_network(n_center=n_center, sigma=float(sigma))
+        self.Phi, self.centers, self.sigma = self.radial_basis_function_network(n_center=n_center, sigma=sigma)
         # Initial weigths:
         self.W = self.init_weights(self.eivec)
         # Projection of the Latent space to the Data space:
@@ -102,7 +102,10 @@ class GTM:
         for x in numpy.arange(delta_x/2,h+delta_x/2,delta_x):
             for y in numpy.arange(delta_y/2,w+delta_y/2,delta_y):
                 centers.append((round(x)-1, round(y)-1))
-        radius = sigma
+        if sigma is not None:
+            radius = sigma
+        else:
+            radius = numpy.sqrt(self.eival[0])/n_x
         m = len(centers)
         Phi = numpy.empty((self.k,m))
         mu_list = []
