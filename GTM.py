@@ -27,8 +27,10 @@ class GTM:
         • alpha: 1/(variance) of the weight (W)
 
         """
-        self.T = inputmat - inputmat.mean(axis=0)
-        self.T /= numpy.linalg.norm(self.T, axis=1).max()
+        self.input_mean = inputmat.mean(axis=0)
+        self.T = inputmat - self.input_mean
+        self.max_norm = numpy.linalg.norm(self.T, axis=1).max()
+        self.T /= self.max_norm
         self.n, self.d = self.T.shape
         # Set automatic size of the array according to the PCA of the input data
         self.nx, self.ny, self.eival, self.eivec = self.get_dim(nx, ny)
@@ -242,7 +244,10 @@ class GTM:
         numpy.fill_diagonal(G, numpy.exp(scipy.misc.logsumexp(logR, axis=1)))
         return G
 
-    def learn(self, n_iterations, report_interval = 10):
+    def learn(self, n_iterations, report_interval = 10, report_rmsd = False):
+        """
+        if report_rmsd: report the RMSD in Angstrom for protein mapping only
+        """
         log_likelihood = []
         progress = Progress.Progress(n_iterations, delta = report_interval)
         logR, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
@@ -268,7 +273,11 @@ class GTM:
             sigma_mapping = numpy.sqrt(self.d/self.beta)
             sigma_mapping_normalized = sigma_mapping / self.sigma_data
             sigma_w = numpy.linalg.norm(self.W, axis=1).var()
-            progress.count(report="𝓵 = %.4g | 𝛽 = %.4g | 𝜎_mapping = %.4g | 𝜎_mapping/𝜎_data = %.4g | 𝜎_𝑾 = %.4g"%(ll, self.beta, sigma_mapping, sigma_mapping_normalized, sigma_w))
+            report="𝓵 = %.4g | 𝛽 = %.4g | 𝜎_mapping = %.4g | 𝜎_mapping/𝜎_data = %.4g | 𝜎_𝑾 = %.4g"%(ll, self.beta, sigma_mapping, sigma_mapping_normalized, sigma_w)
+            if report_rmsd:
+                rmsd = numpy.sqrt(3/self.beta) * self.max_norm
+                report += " | RMSD = %.4g Å"%rmsd
+            progress.count(report=report)
         return self.W, self.beta, log_likelihood
 
     def save_data(self, outfile='gtm.dat'):
@@ -300,6 +309,8 @@ class GTM:
         self.n = data_dict['n']
         self.sigma = data_dict['sigma']
         self.k = data_dict['k']
+        self.max_norm = data_dict['max_norm']
+        self.input_mean = data_dict['input_mean']
 
     def posterior_mode(self):
         """
