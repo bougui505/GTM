@@ -331,3 +331,10 @@ class GTM:
         R = numpy.exp(logR)
         posterior_mean = numpy.dot(R.T, self.X.reshape(self.nx * self.ny, 2))
         return posterior_mean
+
+    def local_std(self):
+        """
+        get the local standard deviation values for the full map in the data unit
+        You hav to divide by sqrt(n_atoms) to obtain an RMSD in angstrom
+        """
+        return numpy.sqrt((self.project_data(self.sqcdist)) * self.max_norm**2)
