@@ -10,6 +10,11 @@ import scipy.spatial.distance
 import scipy.misc
 import progress_reporting as Progress
 import pickle
+try:
+    import MDAnalysis
+    mdanalysis = True
+except ImportError:
+    mdanalysis = False
 
 class GTM:
     def __init__(self, inputmat, (nx, ny), n_center = 10, sigma=None, alpha = 0.):
@@ -338,3 +343,29 @@ class GTM:
         You hav to divide by sqrt(n_atoms) to obtain an RMSD in angstrom
         """
         return numpy.sqrt((self.project_data(self.sqcdist)) * self.max_norm**2)
+
+    def map_to_data(self):
+        """
+        Project the latent space to the data space
+        """
+        eivec_inv = numpy.linalg.inv(self.eivec)
+        data_proj = numpy.dot(self.Phi, self.W).dot(eivec_inv)
+        data_proj = data_proj * self.max_norm + self.input_mean
+        return data_proj
+
+    def array_to_dcd(self, array, outfile='gtm.dcd'):
+        """
+        Convert the numpy array to a dcd file trajectory
+        """
+        if not mdanalysis:
+            print "MDAnalysis is not installed, cannot create dcd file"
+            return None
+        else:
+            n_atoms = self.d / 3
+            array = array.reshape(self.k, n_atoms, 3)
+            ts =  MDAnalysis.coordinates.base.Timestep(n_atoms)
+            W = MDAnalysis.Writer(outfile, n_atoms)
+            for f in array:
+                ts.positions = f
+                W.write_next_timestep(ts)
+            return None
