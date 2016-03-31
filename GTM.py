@@ -109,7 +109,7 @@ class GTM:
         centers = []
         for x in numpy.arange(delta_x/2,h+delta_x/2,delta_x):
             for y in numpy.arange(delta_y/2,w+delta_y/2,delta_y):
-                centers.append((round(x)-1, round(y)-1))
+                centers.append((int(round(x)-1), int(round(y)-1)))
         if sigma is not None:
             radius = sigma
         else:
