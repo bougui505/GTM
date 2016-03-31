@@ -55,13 +55,25 @@ def array_to_pdb(array, struct, outfile='traj.pdb', b_factor=None):
             W.write(u.atoms)
         return u
 
-def get_attribute_assignment_files(array, attribute_name="atomic_attribute", outfilename="atomic_attributes.txt"):
+def get_attribute_assignment_files(array, attribute_name="radius", outfilename="atomic_attributes.txt"):
     """
     Generates a per atom attribute assignment files for chimera as defined in
     https://goo.gl/9OrcCa
     The outputed files can be used to define atomic attributes in chimera with
     the command below:
     defattr atomic_attributes.txt
+
+    For a trajectory, one file per frame can be generated. A Per-Frame command
+    could be written to define the attribute for each frame:
+
+    defattr attribute_files/<FRAME>.txt
+
+    for files stored in attribute_files directory and named after the frame id
+    starting from 1.
+
+    If the attribute_name is radius the default, the vdw radii will be set on
+    the fly when the frame is changing.
+
     """
     header = "attribute: %s\n"%attribute_name
     header += "match mode: 1-to-1\n"
