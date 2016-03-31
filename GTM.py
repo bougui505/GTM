@@ -67,6 +67,7 @@ class GTM:
         sigma_mapping_normalized = sigma_mapping / self.sigma_data
         print "𝛽 = %.4g | 𝜎_mapping = %.4g | 𝜎_mapping/𝜎_data = %.4g"%(self.beta, sigma_mapping, sigma_mapping_normalized)
         print "𝓵 = %.4g"%ll
+        self.log_density = None
 
     def get_dim(self, x_dim, y_dim):
         """
@@ -227,7 +228,8 @@ class GTM:
                  numpy.log(self.k) # evidence (p(t))
         log_density = scipy.misc.logsumexp(logR+logE, axis=1)
         log_density -= scipy.misc.logsumexp(log_density) # normalization factor such as density.sum() == 1
-        return log_density.reshape((self.nx, self.ny))
+        self.log_density = log_density.reshape((self.nx, self.ny))
+        return self.log_density
 
     def project_data(self, data):
         """
