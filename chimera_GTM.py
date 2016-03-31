@@ -40,15 +40,19 @@ class UmatPlot(PlotDialog):
     def __init__(self, movie):
         self.movie = movie
         self.data = numpy.load('gtm.dat')
+        self.k = self.data['k'] # number of cells of the map
+        self.nx = self.data['nx'] # Number of cells of the map for dimension x
+        self.ny = self.data['ny'] # Number of cells of the map for dimension y
+        self.logR = self.data['logR']
+        R = numpy.exp(self.logR)
+        mask = (R.sum(axis=1).reshape(self.nx, self.ny) ==0)
         self.matrix = -self.data['log_density']
+        self.matrix[mask] = numpy.nan
         self.min_value = numpy.nanmin(self.matrix)
         PlotDialog.__init__(self, self.min_value, numpy.nanmax(self.matrix))
         self.master = self._master
         self.displayed_matrix = self.matrix
         self.selection_mode = 'Cell'
-        self.k = self.data['k'] # number of cells of the map
-        self.nx = self.data['nx'] # Number of cells of the map for dimension x
-        self.ny = self.data['ny'] # Number of cells of the map for dimension y
         self.bmus = numpy.asarray([numpy.unravel_index(e, (self.nx,self.ny))
                                     for e in range(self.k)])
         self.selected_neurons = OrderedDict([])
