@@ -353,6 +353,26 @@ class GTM:
         data_proj = data_proj * self.max_norm + self.input_mean
         return data_proj
 
+    def get_atomic_fluctuation(self):
+        """
+
+        Return the fluctuation per atom for each structure of the latent space.
+        Return an array of size (self.k, self.d/3) where self.d/3 is the number
+        of atom.
+
+        """
+        y = self.Phi.dot(self.W)
+        n_atoms = self.T.shape[1]/3
+        y = y.reshape(self.k, n_atoms,3)
+        t = self.T.reshape(self.n, n_atoms, 3)
+        atomic_fluctuations = []
+        for atom_id in range(n_atoms):
+            fluctuation = self.project_data(scipy.spatial.distance.cdist(y[:,atom_id,:], t[:,atom_id,:], metric='sqeuclidean'))
+            fluctuation = numpy.sqrt(fluctuation * self.max_norm**2)
+            atomic_fluctuations.append(fluctuation.flatten())
+        atomic_fluctuations = numpy.asarray(atomic_fluctuations).T
+        return atomic_fluctuations
+
     def array_to_dcd(self, array, outfile='gtm.dcd'):
         """
         Convert the numpy array to a dcd file trajectory
