@@ -372,20 +372,3 @@ class GTM:
             atomic_fluctuations.append(fluctuation.flatten())
         atomic_fluctuations = numpy.asarray(atomic_fluctuations).T
         return atomic_fluctuations
-
-    def array_to_dcd(self, array, outfile='gtm.dcd'):
-        """
-        Convert the numpy array to a dcd file trajectory
-        """
-        if not mdanalysis:
-            print "MDAnalysis is not installed, cannot create dcd file"
-            return None
-        else:
-            n_atoms = self.d / 3
-            array = array.reshape(self.k, n_atoms, 3)
-            ts =  MDAnalysis.coordinates.base.Timestep(n_atoms)
-            W = MDAnalysis.Writer(outfile, n_atoms)
-            for f in array:
-                ts.positions = f
-                W.write_next_timestep(ts)
-            return None
