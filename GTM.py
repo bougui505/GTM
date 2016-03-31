@@ -348,8 +348,8 @@ class GTM:
         """
         Project the latent space to the data space
         """
-        eivec_inv = numpy.linalg.inv(self.eivec)
-        data_proj = numpy.dot(self.Phi, self.W).dot(eivec_inv)
+        self.eivec_inv = numpy.linalg.inv(self.eivec)
+        data_proj = numpy.dot(self.Phi, self.W).dot(self.eivec_inv)
         data_proj = data_proj * self.max_norm + self.input_mean
         return data_proj
 
@@ -361,14 +361,15 @@ class GTM:
         of atom.
 
         """
-        y = self.Phi.dot(self.W)
+        y = self.map_to_data()
         n_atoms = self.T.shape[1]/3
         y = y.reshape(self.k, n_atoms,3)
-        t = self.T.reshape(self.n, n_atoms, 3)
+        t = self.T.dot(self.eivec_inv) * self.max_norm + self.input_mean
+        t = t.reshape(self.n, n_atoms, 3)
         atomic_fluctuations = []
         for atom_id in range(n_atoms):
             fluctuation = self.project_data(scipy.spatial.distance.cdist(y[:,atom_id,:], t[:,atom_id,:], metric='sqeuclidean'))
-            fluctuation = numpy.sqrt(fluctuation * self.max_norm**2)
+            fluctuation = numpy.sqrt(fluctuation)
             atomic_fluctuations.append(fluctuation.flatten())
         atomic_fluctuations = numpy.asarray(atomic_fluctuations).T
         return atomic_fluctuations
