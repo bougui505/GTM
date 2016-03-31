@@ -54,3 +54,23 @@ def array_to_pdb(array, struct, outfile='traj.pdb', b_factor=None):
                 u.atoms.set_bfactors(b_factor[i])
             W.write(u.atoms)
         return u
+
+def get_attribute_assignment_files(array, attribute_name="atomic_attribute", outfilename="atomic_attributes.txt"):
+    """
+    Generates a per atom attribute assignment files for chimera as defined in
+    https://goo.gl/9OrcCa
+    The outputed files can be used to define atomic attributes in chimera with
+    the command below:
+    defattr atomic_attributes.txt
+    """
+    header = "attribute: %s\n"%attribute_name
+    header += "match mode: 1-to-1\n"
+    header += "recipient: atoms\n"
+    data = "\n"
+    for i, value in enumerate(array):
+        data += "\t@/serialNumber=%d\t%.4g\n"%(i+1, value)
+    outfile = open(outfilename, "w")
+    outfile.write(header)
+    outfile.write(data)
+    outfile.close()
+    return None
