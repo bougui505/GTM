@@ -375,3 +375,16 @@ class GTM:
             atomic_fluctuations.append(fluctuation.flatten())
         atomic_fluctuations = numpy.asarray(atomic_fluctuations).T
         return atomic_fluctuations
+
+    def get_transition_matrix(self):
+        """
+        return the transition matrix. Relevant only for the clustering of a MD
+        simulation...
+        Can be used to find kinetic communities using the Graph module:
+            graph = Graph.Graph(adjacency_matrix=-numpy.log(P))
+            graph.best_partition()
+        """
+        R = numpy.exp(self.logR)
+        P = R[:,:self.n-1].dot(R[:,1:].T) / R.sum(axis=1) # Transition matrix
+        P = numpy.nan_to_num(P)
+        return P
