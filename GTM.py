@@ -76,7 +76,7 @@ class GTM:
         max_input: maximum number of input data points to tke into account for the PCA
         """
         M = self.T
-        covarray = numpy.dot(M.T,M)
+        covarray = numpy.cov(M.T)
         eival, eivec = numpy.linalg.eigh(covarray)
         args = eival.argsort()[::-1]
         eival = eival[args]
