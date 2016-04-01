@@ -68,6 +68,7 @@ class GTM:
         print "𝛽 = %.4g | 𝜎_mapping = %.4g | 𝜎_mapping/𝜎_data = %.4g"%(self.beta, sigma_mapping, sigma_mapping_normalized)
         print "𝓵 = %.4g"%ll
         self.log_density = None
+        self.log_likelihood = []
 
     def get_dim(self, x_dim, y_dim):
         """
@@ -255,7 +256,6 @@ class GTM:
         """
         if report_rmsd: report the RMSD in Angstrom for protein mapping only
         """
-        log_likelihood = []
         progress = Progress.Progress(n_iterations, delta = report_interval)
         logR, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
         R = numpy.exp(logR)
@@ -276,7 +276,7 @@ class GTM:
             self.beta = beta
             logR, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
             R = numpy.exp(logR)
-            log_likelihood.append(ll)
+            self.log_likelihood.append(ll)
             sigma_mapping = numpy.sqrt(self.d/self.beta)
             sigma_mapping_normalized = sigma_mapping / self.sigma_data
             sigma_w = numpy.linalg.norm(self.W, axis=1).var()
@@ -285,7 +285,7 @@ class GTM:
                 rmsd = numpy.sqrt(3/self.beta) * self.max_norm
                 report += " | RMSD = %.4g Å"%rmsd
             progress.count(report=report)
-        return self.W, self.beta, log_likelihood
+        return self.W, self.beta, self.log_likelihood
 
     def save_data(self, outfile='gtm.dat'):
         data = self.__dict__
@@ -318,6 +318,7 @@ class GTM:
         self.k = data_dict['k']
         self.max_norm = data_dict['max_norm']
         self.input_mean = data_dict['input_mean']
+        self.log_likelihood = data_dict['log_likelihood']
 
     def posterior_mode(self):
         """
