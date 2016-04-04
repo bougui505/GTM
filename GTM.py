@@ -69,6 +69,8 @@ class GTM:
         print "𝓵 = %.4g"%ll
         self.log_density = None
         self.log_likelihood = []
+        self.posterior_mode = None
+        self.posterior_mean = None
 
     def get_dim(self, x_dim, y_dim):
         """
@@ -319,26 +321,29 @@ class GTM:
         self.max_norm = data_dict['max_norm']
         self.input_mean = data_dict['input_mean']
         self.log_likelihood = data_dict['log_likelihood']
+        self.posterior_mode = data_dict['posterior_mode']
+        self.posterior_mean = data_dict['posterior_mean']
+        self.log_density = data_dict['log_density']
 
-    def posterior_mode(self):
+    def get_posterior_mode(self):
         """
         Return the posterior mode projection:
         x_n = argmax_{x_k}(p(x_k|t_n))
         """
         logR, sqcdist, ll = self.logR, self.sqcdist, self.ll
         R = numpy.exp(logR)
-        posterior_mode = numpy.asarray([numpy.unravel_index(e, (self.nx, self.ny)) for e in R.argmax(axis=0)])
-        return posterior_mode
+        self.posterior_mode = numpy.asarray([numpy.unravel_index(e, (self.nx, self.ny)) for e in R.argmax(axis=0)])
+        return self.posterior_mode
 
-    def posterior_mean(self):
+    def get_posterior_mean(self):
         """
         Return the posterior mean projection:
         x_n = sum_k(x_k.p(x_k|t_n))
         """
         logR, sqcdist, ll = self.logR, self.sqcdist, self.ll
         R = numpy.exp(logR)
-        posterior_mean = numpy.dot(R.T, self.X.reshape(self.nx * self.ny, 2))
-        return posterior_mean
+        self.posterior_mean = numpy.dot(R.T, self.X.reshape(self.nx * self.ny, 2))
+        return self.posterior_mean
 
     def local_std(self):
         """

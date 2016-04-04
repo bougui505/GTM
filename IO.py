@@ -12,6 +12,9 @@ try:
     mdanalysis = True
 except ImportError:
     mdanalysis = False
+import matplotlib
+import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 def array_to_dcd(array, outfile='traj.dcd'):
@@ -86,3 +89,35 @@ def get_attribute_assignment_files(array, attribute_name="radius", outfilename="
     outfile.write(data)
     outfile.close()
     return None
+
+def plot_arrays(gtm, array2=None, scaling_dim = 3):
+    """
+    plot -gtm.log_density as contour and array2 if not None as contourf
+    """
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.set_aspect('equal')
+    divider = make_axes_locatable(ax)
+    n_atoms = gtm.T.shape[1] / scaling_dim
+    x1 = numpy.sqrt(gtm.eival[0]*gtm.max_norm**2 / n_atoms)
+    x2 = numpy.sqrt(gtm.eival[1]*gtm.max_norm**2 / n_atoms)
+    cax = divider.append_axes("right", size="2%", pad=0.05)
+    R = numpy.exp(gtm.logR)
+    mask = (R.sum(axis=1).reshape(gtm.nx, gtm.ny) ==0)
+    array1 = -gtm.log_density
+    array1[mask] = numpy.nan
+    c = ax.contour(numpy.clip(array1.T[::-1,:], 0, 1000), 10, extent=(0,x1,0,x2), cmap = matplotlib.cm.gray)
+    if gtm.posterior_mode is None:
+        posterior_mode = gtm.get_posterior_mode()
+    else:
+        posterior_mode = gtm.posterior_mode
+    posterior_mode = posterior_mode / numpy.float_(posterior_mode.max(axis=0))
+    posterior_mode *= numpy.asarray([x1, x2])
+    ax.plot(posterior_mode[:,0], max(posterior_mode[:,1])-posterior_mode[:,1], 'w.', alpha=.5)
+    if array2 is None:
+        array2 = array1
+    c = ax.contourf(array2.T[::-1,:], 100, extent=(0,x1,0,x2))
+    cb = plt.colorbar(c, cax=cax)
+    ax.set_xlabel("PC1 (Angstrom)")
+    ax.set_ylabel("PC2 (Angstrom)")
+    return ax
