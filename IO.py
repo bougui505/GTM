@@ -104,6 +104,8 @@ def plot_arrays(gtm, array2=None, scaling_dim = 3):
     cax = divider.append_axes("right", size="2%", pad=0.05)
     R = numpy.exp(gtm.logR)
     mask = (R.sum(axis=1).reshape(gtm.nx, gtm.ny) ==0)
+    if gtm.log_density is None:
+        gtm.get_log_density(gtm.T, gtm.W, gtm.beta)
     array1 = -gtm.log_density
     array1[mask] = numpy.nan
     c = ax.contour(numpy.clip(array1.T[::-1,:], 0, 1000), 10, extent=(0,x1,0,x2), cmap = matplotlib.cm.gray)
