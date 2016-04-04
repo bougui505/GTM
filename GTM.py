@@ -177,14 +177,12 @@ class GTM:
         self.logR, self.sqcdist, self.ll = logR, sqcdist, ll
         return logR, sqcdist, ll
 
-    def get_log_density(self, t, W, beta):
+    def get_log_density(self):
         """
         Density estimation of the data in the latent space
         """
         logR, sqcdist, ll = self.logR, self.sqcdist, self.ll
-        logE = (self.d/2.)*numpy.log(beta/(2*numpy.pi)) + \
-                scipy.misc.logsumexp((-beta/2) * sqcdist, axis=0) - \
-                 numpy.log(self.k) # evidence (p(t))
+        logE = self.get_log_p_data()
         log_density = scipy.misc.logsumexp(logR+logE, axis=1)
         log_density -= scipy.misc.logsumexp(log_density) # normalization factor such as density.sum() == 1
         self.log_density = log_density.reshape((self.nx, self.ny))
