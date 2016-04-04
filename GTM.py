@@ -141,7 +141,10 @@ class GTM:
     def init_beta(self):
         """
         """
-        beta = 1/max((numpy.linalg.norm(self.y[1] - self.y[0])/2)**2, self.eival[2])
+        if len(self.eival) > 2:
+            beta = 1/max((numpy.linalg.norm(self.y[1] - self.y[0])/2)**2, self.eival[2])
+        else:
+            beta = 1/(numpy.linalg.norm(self.y[1] - self.y[0])/2)**2
         return beta
 
     def get_likelihood(t_n, x_index, W, beta):
