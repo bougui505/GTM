@@ -95,7 +95,7 @@ class GTM:
 
     def get_grid(self, x_dim, y_dim):
         x_norm, y_norm = numpy.sqrt(self.eival[0]), numpy.sqrt(self.eival[1])
-        X = numpy.asarray(numpy.meshgrid(numpy.linspace(-x_norm/2, x_norm/2,num=x_dim), numpy.linspace(-y_norm/2,y_norm/2,num=y_dim))).T
+        X = numpy.asarray(numpy.meshgrid(numpy.linspace(-x_norm, x_norm, num=x_dim), numpy.linspace(-y_norm, y_norm, num=y_dim))).T
         return X
 
     def radial_basis_function_network(self, n_center, sigma):
@@ -108,8 +108,8 @@ class GTM:
         n = n_center
         n_x = round(numpy.sqrt(w*n/h + (w-h)**2/(4*h**2)) - (w-h)/(2*h))
         n_y = round(n/n_x)
-        delta_x = h/n_x
-        delta_y = w/n_y
+        delta_x = h/n_y
+        delta_y = w/n_x
         centers = []
         for x in numpy.arange(delta_x/2,h+delta_x/2,delta_x):
             for y in numpy.arange(delta_y/2,w+delta_y/2,delta_y):
@@ -117,7 +117,7 @@ class GTM:
         if sigma is not None:
             radius = sigma
         else:
-            radius = numpy.sqrt(self.eival[0])/n_x
+            radius = 2*numpy.sqrt(self.eival[0])/n_y
         m = len(centers)
         Phi = numpy.empty((self.k,m))
         mu_list = []
@@ -131,11 +131,7 @@ class GTM:
 
     def init_weights(self, eivec):
         W = numpy.zeros((self.Phi.shape[1],self.T.shape[1]))
-        W[-3:-1,:] = eivec[:,:2].T
-        y = numpy.dot(self.Phi,W)
-        y_var = y.var(axis=0)
-        data_var = self.T.var(axis=0)
-        W = W*numpy.sqrt(data_var)/numpy.sqrt(y_var)
+        W[-3:-1,:2] = numpy.identity(2)
         return W
 
     def init_beta(self):

@@ -99,8 +99,8 @@ def plot_arrays(gtm, array2=None, scaling_dim = 3):
     ax.set_aspect('equal')
     divider = make_axes_locatable(ax)
     n_atoms = gtm.T.shape[1] / scaling_dim
-    x1 = numpy.sqrt(gtm.eival[0]*gtm.max_norm**2 / n_atoms)
-    x2 = numpy.sqrt(gtm.eival[1]*gtm.max_norm**2 / n_atoms)
+    x1 = 2*numpy.sqrt(gtm.eival[0]*gtm.max_norm**2 / n_atoms)
+    x2 = 2*numpy.sqrt(gtm.eival[1]*gtm.max_norm**2 / n_atoms)
     cax = divider.append_axes("right", size="2%", pad=0.05)
     R = numpy.exp(gtm.logR)
     mask = (R.sum(axis=1).reshape(gtm.nx, gtm.ny) ==0)
