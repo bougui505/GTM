@@ -173,7 +173,7 @@ class GTM:
         # Real value of log-likelihood
         #ll = self.n*numpy.log( (1./self.k) * (beta/(2*numpy.pi))**(self.d/2.)) + logE.sum()
         # Tracking value of log-likelihood
-        ll = (self.n*self.d/2)*numpy.log(beta/(2*numpy.pi)) + logE.sum()
+        ll = (self.n*self.d/2.)*numpy.log(beta/(2*numpy.pi)) + logE.sum()
         self.logR, self.sqcdist, self.ll = logR, sqcdist, ll
         return logR, sqcdist, ll
 
@@ -182,13 +182,22 @@ class GTM:
         Density estimation of the data in the latent space
         """
         logR, sqcdist, ll = self.logR, self.sqcdist, self.ll
-        logE = (self.d/2)*numpy.log(beta/(2*numpy.pi)) + \
+        logE = (self.d/2.)*numpy.log(beta/(2*numpy.pi)) + \
                 scipy.misc.logsumexp((-beta/2) * sqcdist, axis=0) - \
                  numpy.log(self.k) # evidence (p(t))
         log_density = scipy.misc.logsumexp(logR+logE, axis=1)
         log_density -= scipy.misc.logsumexp(log_density) # normalization factor such as density.sum() == 1
         self.log_density = log_density.reshape((self.nx, self.ny))
         return self.log_density
+
+    def get_log_p_data(self):
+        """
+        get log(p(t|W,beta))
+        """
+        logE = .5*numpy.log(self.beta) - (self.d/2.)*numpy.log(2*numpy.pi)+ \
+                scipy.misc.logsumexp((-self.beta/2) * self.sqcdist, axis=0) - \
+                 numpy.log(self.k) # evidence (p(t))
+        return logE
 
     def project_data(self, data):
         """
