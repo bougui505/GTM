@@ -143,19 +143,6 @@ class GTM:
             beta = 1/(numpy.linalg.norm(self.y[1] - self.y[0])/2)**2
         return beta
 
-    def get_likelihood(t_n, x_index, W, beta):
-        """
-        t_n: on vector of the input space
-        x_index: flatten index of the latent space
-        W: Weights of the latent space
-        beta: variance of the latent space
-        """
-        D = W.shape[1]
-        y = numpy.dot(Phi[x_index], W)
-        sqdist = ((y-t_n)**2).sum()
-        L = (beta/(2*numpy.pi))**(D/2.)*numpy.exp(-(beta/2)*sqdist)
-        return L
-
     def get_likelihood_array(self, t, W, beta):
         """
         the likelihood matrix (L) is an array of shape K×N, 
@@ -166,36 +153,6 @@ class GTM:
         sqcdist = scipy.spatial.distance.cdist(numpy.dot(self.Phi, W), t, 'sqeuclidean')
         L = ((beta/(2*numpy.pi))**(D/2.))*numpy.exp(-(beta/2)*sqcdist)
         return L
-
-    def get_evidence(t_n, W, beta):
-        D = W.shape[1]
-        sqdists = ((numpy.dot(Phi, W) - t_n[:,None])**2).sum(axis=0)
-        L = (beta/(2*numpy.pi))**(D/2.)*numpy.exp(-(beta/2)*sqdists)
-        E = L.sum()
-        return E
-
-    def get_evidence_array(t, W, beta):
-        """
-        Return the array of evidence: 
-        Size: N, with N the number of input data points
-        """
-        D = W.shape[1]
-        sqcdist = scipy.spatial.distance.cdist(numpy.dot(Phi, W), t, 'sqeuclidean')
-        L = (beta/(2*numpy.pi))**(D/2.)*numpy.exp(-(beta/2)*sqcdist)
-        E = L.sum(axis=0)
-        return E
-
-    def get_posterior(t_n, x_index, W, beta):
-        """
-        t_n: on vector of the input space
-        x_index: flatten index of the latent space
-        W: Weights of the latent space
-        beta: variance of the latent space
-        """
-        L = get_likelihood(t_n, x_index, W, beta)
-        E = get_evidence(t_n, W, beta)
-        P = L/E
-        return P
 
     def get_log_likelihood(self, L):
         K = L.shape[0] # Number of cells (neurons)
