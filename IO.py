@@ -91,9 +91,11 @@ def get_attribute_assignment_files(array, attribute_name="radius", outfilename="
     return None
 
 def plot_arrays(gtm, array2=None, scaling_dim = 3, markersize=4., fig = None,
-                ax = None, title=None, xlabel="PC1", ylabel="PC2"):
+                ax = None, title=None, xlabel="PC1", ylabel="PC2", levels=100):
     """
     plot -gtm.log_density as contour and array2 if not None as contourf
+
+    • levels: number of contour levels for contourf
     """
     if fig is None:
         fig = plt.figure()
@@ -121,10 +123,12 @@ def plot_arrays(gtm, array2=None, scaling_dim = 3, markersize=4., fig = None,
             'w.', alpha=.5, markersize=markersize)
     if array2 is None:
         array2 = array1
-    c = ax.contourf(array2.T[::-1,:], 100, extent=(0,x1,0,x2))
+    c = ax.contourf(array2.T[::-1,:], levels, extent=(0,x1,0,x2))
     cb = plt.colorbar(c, cax=cax)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
+    if xlabel is not None:
+        ax.set_xlabel(xlabel)
+    if ylabel is not None:
+        ax.set_ylabel(ylabel)
     if title is not None:
         ax.set_title(title)
     return ax
