@@ -90,7 +90,7 @@ def get_attribute_assignment_files(array, attribute_name="radius", outfilename="
     outfile.close()
     return None
 
-def plot_arrays(gtm, array2=None, scaling_dim = 3):
+def plot_arrays(gtm, array2=None, scaling_dim = 3, markersize=4.):
     """
     plot -gtm.log_density as contour and array2 if not None as contourf
     """
@@ -115,7 +115,8 @@ def plot_arrays(gtm, array2=None, scaling_dim = 3):
         posterior_mode = gtm.posterior_mode
     posterior_mode = posterior_mode / numpy.float_(posterior_mode.max(axis=0))
     posterior_mode *= numpy.asarray([x1, x2])
-    ax.plot(posterior_mode[:,0], max(posterior_mode[:,1])-posterior_mode[:,1], 'w.', alpha=.5)
+    ax.plot(posterior_mode[:,0], max(posterior_mode[:,1])-posterior_mode[:,1],
+            'w.', alpha=.5, markersize=markersize)
     if array2 is None:
         array2 = array1
     c = ax.contourf(array2.T[::-1,:], 100, extent=(0,x1,0,x2))
