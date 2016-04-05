@@ -53,6 +53,7 @@ class GTM:
         self.alpha = alpha
         # Initialize beta (inverse of the variance):
         self.beta = self.init_beta()
+        self.beta_list = []
         # Give informations about the initial likelihood:
         logR, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
         print "𝙏: %s"%str(self.T.shape)
@@ -243,6 +244,7 @@ class GTM:
             logR, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
             R = numpy.exp(logR)
             self.log_likelihood.append(ll)
+            self.beta_list.append(self.beta)
             sigma_mapping = numpy.sqrt(self.d/self.beta)
             sigma_mapping_normalized = sigma_mapping / self.sigma_data
             sigma_w = numpy.linalg.norm(self.W, axis=1).var()
@@ -288,6 +290,7 @@ class GTM:
         self.posterior_mode = data_dict['posterior_mode']
         self.posterior_mean = data_dict['posterior_mean']
         self.log_density = data_dict['log_density']
+        self.beta_list = data_dict['beta_list']
 
     def get_posterior_mode(self):
         """
