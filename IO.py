@@ -90,12 +90,14 @@ def get_attribute_assignment_files(array, attribute_name="radius", outfilename="
     outfile.close()
     return None
 
-def plot_arrays(gtm, array2=None, scaling_dim = 3, markersize=4.):
+def plot_arrays(gtm, array2=None, scaling_dim = 3, markersize=4., fig = None,
+                ax = None, title=None, xlabel="PC1", ylabel="PC2"):
     """
     plot -gtm.log_density as contour and array2 if not None as contourf
     """
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
+    if fig is None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
     ax.set_aspect('equal')
     divider = make_axes_locatable(ax)
     n_atoms = gtm.T.shape[1] / scaling_dim
@@ -121,6 +123,8 @@ def plot_arrays(gtm, array2=None, scaling_dim = 3, markersize=4.):
         array2 = array1
     c = ax.contourf(array2.T[::-1,:], 100, extent=(0,x1,0,x2))
     cb = plt.colorbar(c, cax=cax)
-    ax.set_xlabel("PC1 (Angstrom)")
-    ax.set_ylabel("PC2 (Angstrom)")
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    if title is not None:
+        ax.set_title(title)
     return ax
