@@ -17,7 +17,8 @@ except ImportError:
     mdanalysis = False
 
 class GTM:
-    def __init__(self, inputmat, (nx, ny), n_center = 10, sigma=None, alpha = 0.):
+    def __init__(self, inputmat, (nx, ny), n_center = 10, sigma=None, alpha = 0., 
+                 gtm_file = None):
         """
 
         • inputmat: input data size: n×d, with n the number of data and d the 
@@ -31,31 +32,42 @@ class GTM:
 
         • alpha: 1/(variance) of the weight (W)
 
+        • if gtm_file is not None, load the data from a previous run
+
         """
-        self.input_mean = inputmat.mean(axis=0)
-        self.T = inputmat - self.input_mean
-        self.max_norm = numpy.linalg.norm(self.T, axis=1).max()
-        self.T /= self.max_norm
-        self.n, self.d = self.T.shape
-        # Set automatic size of the array according to the PCA of the input data
-        self.nx, self.ny, self.eival, self.eivec = self.get_dim(nx, ny)
-        self.T = numpy.dot(self.T, self.eivec)
-        # Grid of the latent space
-        self.X = self.get_grid(self.nx, self.ny)
-        # Define the radial basis function network
-        self.k = self.nx * self.ny
-        self.Phi, self.centers, self.sigma = self.radial_basis_function_network(n_center=n_center, sigma=sigma)
-        # Initial weigths:
-        self.W = self.init_weights(self.eivec)
-        # Projection of the Latent space to the Data space:
-        self.y = numpy.dot(self.Phi, self.W)
-        # 1/(variance) of the weight (𝛼)
-        self.alpha = alpha
-        # Initialize beta (inverse of the variance):
-        self.beta = self.init_beta()
-        self.beta_list = []
-        # Give informations about the initial likelihood:
-        logR, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
+        if gtm_file is not None:
+            self.load_data(infile=gtm_file)
+            ll = self.ll
+        else:
+            self.input_mean = inputmat.mean(axis=0)
+            self.T = inputmat - self.input_mean
+            self.max_norm = numpy.linalg.norm(self.T, axis=1).max()
+            self.T /= self.max_norm
+            self.n, self.d = self.T.shape
+            # Set automatic size of the array according to the PCA of the input data
+            self.nx, self.ny, self.eival, self.eivec = self.get_dim(nx, ny)
+            self.T = numpy.dot(self.T, self.eivec)
+            # Grid of the latent space
+            self.X = self.get_grid(self.nx, self.ny)
+            # Define the radial basis function network
+            self.k = self.nx * self.ny
+            self.Phi, self.centers, self.sigma = self.radial_basis_function_network(n_center=n_center, sigma=sigma)
+            # Initial weigths:
+            self.W = self.init_weights(self.eivec)
+            # Projection of the Latent space to the Data space:
+            self.y = numpy.dot(self.Phi, self.W)
+            # 1/(variance) of the weight (𝛼)
+            self.alpha = alpha
+            # Initialize beta (inverse of the variance):
+            self.beta = self.init_beta()
+            self.beta_list = []
+            # Give informations about the initial likelihood:
+            logR, sqcdist, ll = self.get_posterior_array(self.T, self.W, self.beta)
+            self.sigma_data = numpy.linalg.norm(self.T.std(axis=0))
+            self.log_density = None
+            self.log_likelihood = []
+            self.posterior_mode = None
+            self.posterior_mean = None
         print "𝙏: %s"%str(self.T.shape)
         print "𝑿: %s"%str(self.X.shape)
         print "𝜱: %s"%str(self.Phi.shape)
@@ -64,14 +76,9 @@ class GTM:
         print "𝑾: %s"%str(self.W.shape)
         print "𝛼 = %.4g"%self.alpha
         sigma_mapping = numpy.sqrt(self.d/self.beta)
-        self.sigma_data = numpy.linalg.norm(self.T.std(axis=0))
         sigma_mapping_normalized = sigma_mapping / self.sigma_data
         print "𝛽 = %.4g | 𝜎_mapping = %.4g | 𝜎_mapping/𝜎_data = %.4g"%(self.beta, sigma_mapping, sigma_mapping_normalized)
         print "𝓵 = %.4g"%ll
-        self.log_density = None
-        self.log_likelihood = []
-        self.posterior_mode = None
-        self.posterior_mean = None
 
     def get_dim(self, x_dim, y_dim):
         """
