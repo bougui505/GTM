@@ -192,9 +192,10 @@ class GTM:
         """
         get log(p(t|W,beta))
         """
-        logE = .5*numpy.log(self.beta) - (self.d/2.)*numpy.log(2*numpy.pi)+ \
+        logE = (self.d/2.)*numpy.log(self.beta) - (self.d/2.)*numpy.log(2*numpy.pi)+ \
                 scipy.misc.logsumexp((-self.beta/2) * self.sqcdist, axis=0) - \
                  numpy.log(self.k) # evidence (p(t))
+        logE -= scipy.misc.logsumexp(logE)
         return logE
 
     def project_data(self, data):
