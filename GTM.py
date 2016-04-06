@@ -364,7 +364,9 @@ class GTM:
             graph = Graph.Graph(adjacency_matrix=-numpy.log(P))
             graph.best_partition()
         """
-        R = numpy.exp(self.logR)
-        P = R[:,:self.n-1].dot(R[:,1:].T) / R.sum(axis=1) # Transition matrix
+        logR = self.logR
+        logE = self.get_log_p_data()
+        S = numpy.exp(logR + logE)
+        P = S[:,:self.n-1].dot(S[:,1:].T)# / S.sum(axis=1)
         P = numpy.nan_to_num(P)
         return P
