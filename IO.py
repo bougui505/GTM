@@ -90,12 +90,13 @@ def get_attribute_assignment_files(array, attribute_name="radius", outfilename="
     outfile.close()
     return None
 
-def plot_arrays(gtm, array2=None, scaling_dim = 3, markersize=4., fig = None,
+def plot_arrays(gtm, array2=None, scatter=None, scatter_attribute="r.", scaling_dim = 3, markersize=4., fig = None,
                 ax = None, title=None, xlabel="PC1", ylabel="PC2", levels=100,
                 cmap=matplotlib.cm.jet):
     """
     plot -gtm.log_density as contour and array2 if not None as contourf
 
+    • If scatter is not None (an N*2 matrix): plot the N point as a scatter plot
     • levels: number of contour levels for contourf
     • cmap: color map for the contourf
     """
@@ -119,10 +120,14 @@ def plot_arrays(gtm, array2=None, scaling_dim = 3, markersize=4., fig = None,
         posterior_mode = gtm.get_posterior_mode()
     else:
         posterior_mode = gtm.posterior_mode
-    posterior_mode = posterior_mode / numpy.float_(gtm.log_density.shape)
-    posterior_mode *= numpy.asarray([x1, x2])
-    ax.plot(posterior_mode[:,0], x2-posterior_mode[:,1],
+    new_basis = lambda x: [-1,1]*([0,x2] - x*numpy.asarray([x1, x2])/numpy.float_(gtm.log_density.shape))
+    posterior_mode = new_basis(posterior_mode)
+    ax.plot(posterior_mode[:,0], posterior_mode[:,1],
             'w.', alpha=.5, markersize=markersize)
+    if scatter is not None:
+        scatter = new_basis(scatter)
+        ax.plot(scatter[:,0], scatter[:,1],
+                scatter_attribute, markersize=8*markersize)
     if array2 is None:
         array2 = array1
     c = ax.contourf(array2.T[::-1,:], levels, extent=(0,x1,0,x2), cmap=cmap)
