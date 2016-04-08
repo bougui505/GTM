@@ -119,9 +119,9 @@ def plot_arrays(gtm, array2=None, scaling_dim = 3, markersize=4., fig = None,
         posterior_mode = gtm.get_posterior_mode()
     else:
         posterior_mode = gtm.posterior_mode
-    posterior_mode = posterior_mode / numpy.float_(posterior_mode.max(axis=0))
+    posterior_mode = posterior_mode / numpy.float_(gtm.log_density.shape)
     posterior_mode *= numpy.asarray([x1, x2])
-    ax.plot(posterior_mode[:,0], max(posterior_mode[:,1])-posterior_mode[:,1],
+    ax.plot(posterior_mode[:,0], x2-posterior_mode[:,1],
             'w.', alpha=.5, markersize=markersize)
     if array2 is None:
         array2 = array1
