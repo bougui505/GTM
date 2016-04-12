@@ -115,7 +115,7 @@ def plot_arrays(gtm, array2=None, scatter=None, scatter_attribute="r.", scaling_
         gtm.get_log_density()
     array1 = -gtm.log_density
     array1[mask] = numpy.nan
-    c = ax.contour(numpy.clip(array1.T[::-1,:], 0, 1000), 10, extent=(0,x1,0,x2), cmap = matplotlib.cm.gray)
+    c = ax.contour(array1.T[::-1,:], 10, extent=(0,x1,0,x2), cmap = matplotlib.cm.gray)
     if gtm.posterior_mode is None:
         posterior_mode = gtm.get_posterior_mode()
     else:
