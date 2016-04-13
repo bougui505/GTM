@@ -10,6 +10,7 @@ import scipy.spatial.distance
 import scipy.misc
 import progress_reporting as Progress
 import pickle
+import copy
 try:
     import MDAnalysis
     mdanalysis = True
@@ -68,6 +69,7 @@ class GTM:
             self.log_likelihood = []
             self.posterior_mode = None
             self.posterior_mean = None
+        self.X_ori = None
         print "𝙏: %s"%str(self.T.shape)
         print "𝑿: %s"%str(self.X.shape)
         print "𝜱: %s"%str(self.Phi.shape)
@@ -79,6 +81,56 @@ class GTM:
         sigma_mapping_normalized = sigma_mapping / self.sigma_data
         print "𝛽 = %.4g | 𝜎_mapping = %.4g | 𝜎_mapping/𝜎_data = %.4g"%(self.beta, sigma_mapping, sigma_mapping_normalized)
         print "𝓵 = %.4g"%ll
+
+    def rescale_grid(self, scaling_factor):
+        """
+        Rescale the resolution of the latent space grid by scaling factor. The
+        new number of grid points is ~ self.k * scaling_factor
+        • Important remark: The scaling factor must be a positive number lower 
+          than 1
+        """
+        n = int(1/scaling_factor)
+        if self.X_ori is None:
+            # Keep copies of original objects
+            self.X_ori = copy.deepcopy(self.X)
+            self.Phi_ori = copy.deepcopy(self.Phi)
+            self.logR_ori = copy.deepcopy(self.logR)
+            self.sqcdist_ori = copy.deepcopy(self.sqcdist)
+        else:
+            # Reload original objects before resampling them
+            self.X = copy.deepcopy(self.X_ori)
+            self.Phi = copy.deepcopy(self.Phi_ori)
+            self.logR = copy.deepcopy(self.logR_ori)
+            self.sqcdist = copy.deepcopy(self.sqcdist_ori)
+            self.nx, self.ny = self.X.shape[:2]
+        self.X = self.X[::n, ::n, :]
+        self.k = numpy.prod(self.X.shape[:2])
+        n_basis_function = self.Phi.shape[-1]
+        self.Phi = self.Phi\
+                   .reshape((self.nx, self.ny, n_basis_function))[::n, ::n, :]
+        self.Phi = self.Phi.reshape((self.k, n_basis_function))
+        self.y = numpy.dot(self.Phi, self.W)
+        self.logR = self.logR.reshape((self.nx, self.ny, self.n))[::n, ::n, :]
+        self.logR = self.logR.reshape((self.k, self.n))
+        self.sqcdist = self.sqcdist\
+                       .reshape((self.nx, self.ny, self.n))[::n, ::n, :]
+        self.sqcdist = self.sqcdist.reshape((self.k, self.n))
+        self.nx, self.ny = self.X.shape[:2]
+        # New beta
+        logbeta = numpy.log(self.n*self.d) - scipy.misc.logsumexp(self.logR+numpy.log(self.sqcdist))
+        self.beta = numpy.exp(logbeta)
+        ######
+        # New logR
+        logL = -(self.beta/2)*self.sqcdist
+        logE = scipy.misc.logsumexp(-self.beta/2 * self.sqcdist, axis=0)
+        self.logR = logL - logE
+        ll = (self.n*self.d/2.)*numpy.log(self.beta/(2*numpy.pi)) + logE.sum()
+        ######
+        print "𝑿: %s"%str(self.X.shape)
+        print "𝜱: %s"%str(self.Phi.shape)
+        print "𝛽 = %.4g"%self.beta
+        print "𝓵 = %.4g"%ll
+        return self.beta, ll
 
     def get_dim(self, x_dim, y_dim):
         """
