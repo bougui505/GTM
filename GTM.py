@@ -110,21 +110,19 @@ class GTM:
                    .reshape((self.nx, self.ny, n_basis_function))[::n, ::n, :]
         self.Phi = self.Phi.reshape((self.k, n_basis_function))
         self.y = numpy.dot(self.Phi, self.W)
-        self.logR = self.logR.reshape((self.nx, self.ny, self.n))[::n, ::n, :]
-        self.logR = self.logR.reshape((self.k, self.n))
         self.sqcdist = self.sqcdist\
                        .reshape((self.nx, self.ny, self.n))[::n, ::n, :]
         self.sqcdist = self.sqcdist.reshape((self.k, self.n))
-        self.nx, self.ny = self.X.shape[:2]
-        # New beta
-        logbeta = numpy.log(self.n*self.d) - scipy.misc.logsumexp(self.logR+numpy.log(self.sqcdist))
-        self.beta = numpy.exp(logbeta)
-        ######
         # New logR
         logL = -(self.beta/2)*self.sqcdist
         logE = scipy.misc.logsumexp(-self.beta/2 * self.sqcdist, axis=0)
         self.logR = logL - logE
         ll = (self.n*self.d/2.)*numpy.log(self.beta/(2*numpy.pi)) + logE.sum()
+        ######
+        self.nx, self.ny = self.X.shape[:2]
+        # New beta
+        logbeta = numpy.log(self.n*self.d) - scipy.misc.logsumexp(self.logR+numpy.log(self.sqcdist))
+        self.beta = numpy.exp(logbeta)
         ######
         print "𝑿: %s"%str(self.X.shape)
         print "𝜱: %s"%str(self.Phi.shape)
