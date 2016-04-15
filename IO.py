@@ -15,6 +15,7 @@ except ImportError:
 import matplotlib
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import copy
 
 
 def array_to_dcd(array, outfile='traj.dcd'):
@@ -93,13 +94,17 @@ def get_attribute_assignment_files(array, attribute_name="radius", outfilename="
 def plot_arrays(gtm, array2=None, scatter=None, scatter_attribute="r.",
                 scaling_dim = 3, markersize=4., fig = None,
                 ax = None, title=None, xlabel="PC1", ylabel="PC2", levels=100,
-                cmap=matplotlib.cm.jet, vmin = None, vmax = None):
+                cmap=matplotlib.cm.jet, vmin = None, vmax = None,
+                scatter_mode='mode'):
     """
     plot -gtm.log_density as contour and array2 if not None as contourf
 
     • If scatter is not None (an N*2 matrix): plot the N point as a scatter plot
     • levels: number of contour levels for contourf
     • cmap: color map for the contourf
+    • vmin, vmax: set the min and max values for the contourf plot
+    • if scatter_mode is 'mode' (default), plot the posterior mode else if
+      scatter_mode is 'mean', plot the posterior mean instead
     """
     if fig is None:
         fig = plt.figure()
@@ -117,13 +122,21 @@ def plot_arrays(gtm, array2=None, scatter=None, scatter_attribute="r.",
     array1 = -gtm.log_density
     array1[mask] = numpy.nan
     c = ax.contour(array1.T[::-1,:], 10, extent=(0,x1,0,x2), cmap = matplotlib.cm.gray)
-    if gtm.posterior_mode is None:
-        posterior_mode = gtm.get_posterior_mode()
-    else:
-        posterior_mode = gtm.posterior_mode
+    if scatter_mode == "mode":
+        if gtm.posterior_mode is None:
+            posterior_m = copy.deepcopy(gtm.get_posterior_mode())
+        else:
+            posterior_m = copy.deepcopy(gtm.posterior_mode)
+    elif scatter_mode == "mean":
+        if gtm.posterior_mean is None:
+            posterior_m = copy.deepcopy(gtm.get_posterior_mean())
+        else:
+            posterior_m = copy.deepcopy(gtm.posterior_mean)
+        xy = (numpy.sqrt(gtm.eival[0]), numpy.sqrt(gtm.eival[1]))
+        posterior_m = (.5*( gtm.posterior_mean + xy ) / xy ) * (gtm.nx, gtm.ny)
     new_basis = lambda x: [-1,1]*([0,x2] - x*numpy.asarray([x1, x2])/numpy.float_(gtm.log_density.shape))
-    posterior_mode = new_basis(posterior_mode)
-    ax.plot(posterior_mode[:,0], posterior_mode[:,1],
+    posterior_m = new_basis(posterior_m)
+    ax.plot(posterior_m[:,0], posterior_m[:,1],
             'w.', alpha=.5, markersize=markersize)
     if scatter is not None:
         scatter = new_basis(scatter)
