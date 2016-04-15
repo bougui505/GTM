@@ -90,9 +90,10 @@ def get_attribute_assignment_files(array, attribute_name="radius", outfilename="
     outfile.close()
     return None
 
-def plot_arrays(gtm, array2=None, scatter=None, scatter_attribute="r.", scaling_dim = 3, markersize=4., fig = None,
+def plot_arrays(gtm, array2=None, scatter=None, scatter_attribute="r.",
+                scaling_dim = 3, markersize=4., fig = None,
                 ax = None, title=None, xlabel="PC1", ylabel="PC2", levels=100,
-                cmap=matplotlib.cm.jet):
+                cmap=matplotlib.cm.jet, vmin = None, vmax = None):
     """
     plot -gtm.log_density as contour and array2 if not None as contourf
 
@@ -130,7 +131,8 @@ def plot_arrays(gtm, array2=None, scatter=None, scatter_attribute="r.", scaling_
                 scatter_attribute, markersize=8*markersize)
     if array2 is None:
         array2 = array1
-    c = ax.contourf(array2.T[::-1,:], levels, extent=(0,x1,0,x2), cmap=cmap)
+    c = ax.contourf(array2.T[::-1,:], levels, extent=(0,x1,0,x2), cmap=cmap,
+                    vmin=vmin, vmax=vmax)
     cb = plt.colorbar(c, cax=cax)
     if xlabel is not None:
         ax.set_xlabel(xlabel)
