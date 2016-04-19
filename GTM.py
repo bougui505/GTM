@@ -96,12 +96,14 @@ class GTM:
             self.Phi_ori = copy.deepcopy(self.Phi)
             self.logR_ori = copy.deepcopy(self.logR)
             self.sqcdist_ori = copy.deepcopy(self.sqcdist)
+            self.beta_ori = copy.deepcopy(self.beta)
         else:
             # Reload original objects before resampling them
             self.X = copy.deepcopy(self.X_ori)
             self.Phi = copy.deepcopy(self.Phi_ori)
             self.logR = copy.deepcopy(self.logR_ori)
             self.sqcdist = copy.deepcopy(self.sqcdist_ori)
+            self.beta = copy.deepcopy(self.beta_ori)
             self.nx, self.ny = self.X.shape[:2]
         self.X = self.X[::n, ::n, :]
         self.k = numpy.prod(self.X.shape[:2])
