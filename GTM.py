@@ -40,14 +40,13 @@ class GTM:
             self.load_data(infile=gtm_file)
             ll = self.ll
         else:
-            self.input_mean = inputmat.mean(axis=0)
-            self.T = inputmat - self.input_mean
-            self.max_norm = numpy.linalg.norm(self.T, axis=1).max()
-            self.T /= self.max_norm
-            self.n, self.d = self.T.shape
-            # Set automatic size of the array according to the PCA of the input data
-            self.nx, self.ny, self.eival, self.eivec = self.get_dim(nx, ny)
-            self.T = numpy.dot(self.T, self.eivec)
+            self.input_mean = None
+            self.max_norm = None
+            self.eivec = None
+            self.W = None
+            self.nx = nx
+            self.ny = ny
+            self.load_input_space(inputmat)
             # Grid of the latent space
             self.X = self.get_grid(self.nx, self.ny)
             # Define the radial basis function network
@@ -81,6 +80,36 @@ class GTM:
         sigma_mapping_normalized = sigma_mapping / self.sigma_data
         print "𝛽 = %.4g | 𝜎_mapping = %.4g | 𝜎_mapping/𝜎_data = %.4g"%(self.beta, sigma_mapping, sigma_mapping_normalized)
         print "𝓵 = %.4g"%ll
+
+    def load_input_space(self, inputmat):
+        if self.input_mean is None:
+            self.input_mean = inputmat.mean(axis=0)
+        self.T = inputmat - self.input_mean
+        if self.max_norm is None:
+            self.max_norm = numpy.linalg.norm(self.T, axis=1).max()
+        self.T /= self.max_norm
+        self.n, self.d = self.T.shape
+        if self.eivec is None:
+            # Set automatic size of the array according to the PCA of the input
+            # data
+            self.nx, self.ny, self.eival, self.eivec = self.get_dim(
+                                                               self.nx, self.ny)
+        self.T = numpy.dot(self.T, self.eivec)
+        if self.W is not None:
+            # New logR, sqcdist and log likelihood
+            logR, sqcdist, ll = self.get_posterior_array(self.T, self.W,
+                                                         self.beta)
+            # New beta
+            logbeta = numpy.log(self.n*self.d) - scipy.misc.logsumexp(self.logR+
+                                                        numpy.log(self.sqcdist))
+            self.beta = numpy.exp(logbeta)
+            ######
+            sigma_mapping = numpy.sqrt(self.d/self.beta)
+            self.sigma_data = numpy.linalg.norm(self.T.std(axis=0))
+            sigma_mapping_normalized = sigma_mapping / self.sigma_data
+            print "𝛽 = %.4g | 𝜎_mapping = %.4g | 𝜎_mapping/𝜎_data = %.4g"%(
+                             self.beta, sigma_mapping, sigma_mapping_normalized)
+            print "𝓵 = %.4g"%ll
 
     def rescale_grid(self, scaling_factor):
         """
