@@ -121,7 +121,8 @@ def plot_arrays(gtm, array2=None, scatter=None, scatter_attribute="r.",
         gtm.get_log_density()
     array1 = -gtm.log_density
     array1[mask] = numpy.nan
-    c = ax.contour(array1.T[::-1,:], 10, extent=(0,x1,0,x2), cmap = matplotlib.cm.gray)
+    extent=(0,x1,0,x2)
+    c = ax.contour(array1.T[::-1,:], 10, extent=extent, cmap = matplotlib.cm.gray)
     if scatter_mode == "mode":
         if gtm.posterior_mode is None:
             posterior_m = copy.deepcopy(gtm.get_posterior_mode())
@@ -144,7 +145,7 @@ def plot_arrays(gtm, array2=None, scatter=None, scatter_attribute="r.",
                 scatter_attribute, markersize=8*markersize)
     if array2 is None:
         array2 = array1
-    c = ax.contourf(array2.T[::-1,:], levels, extent=(0,x1,0,x2), cmap=cmap,
+    c = ax.contourf(array2.T[::-1,:], levels, extent=extent, cmap=cmap,
                     vmin=vmin, vmax=vmax)
     cb = plt.colorbar(c, cax=cax)
     if xlabel is not None:
@@ -153,4 +154,4 @@ def plot_arrays(gtm, array2=None, scatter=None, scatter_attribute="r.",
         ax.set_ylabel(ylabel)
     if title is not None:
         ax.set_title(title)
-    return ax
+    return ax, extent
