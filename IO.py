@@ -147,8 +147,8 @@ def plot_arrays(gtm, array2=None, scatter=None, scatter_attribute="r.",
     if scatter is not None:
         scatter = new_basis(scatter)
         if color is not None:
-            ax.plot(scatter[:,0], scatter[:,1],
-                    scatter_attribute, markersize=8*markersize, color=color)
+            ax.scatter(scatter[:,0], scatter[:,1], s=8*markersize, c=color,
+                        linewidths=0., zorder=3)
         else:
             ax.plot(scatter[:,0], scatter[:,1],
                     scatter_attribute, markersize=8*markersize)
