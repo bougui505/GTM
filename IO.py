@@ -95,11 +95,16 @@ def plot_arrays(gtm, array2=None, scatter=None, scatter_attribute="r.",
                 scaling_dim = 3, markersize=4., fig = None,
                 ax = None, title=None, xlabel="PC1", ylabel="PC2", levels=100,
                 cmap=matplotlib.cm.jet, vmin = None, vmax = None,
-                scatter_mode='mode'):
+                scatter_mode='mode', color=None):
     """
     plot -gtm.log_density as contour and array2 if not None as contourf
 
     • If scatter is not None (an N*2 matrix): plot the N point as a scatter plot
+    • color is an other formatting option to give the color of the scatter plot
+      given by the scatter argument. You can specify colors in many weird and
+      wonderful ways, including full names (``'green'``), hex strings
+      (``'#008000'``), RGB or RGBA tuples (``(0,1,0,1)``) or grayscale
+      intensities as a string (``'0.8'``).
     • levels: number of contour levels for contourf
     • cmap: color map for the contourf
     • vmin, vmax: set the min and max values for the contourf plot
@@ -141,8 +146,12 @@ def plot_arrays(gtm, array2=None, scatter=None, scatter_attribute="r.",
             'w.', alpha=.5, markersize=markersize)
     if scatter is not None:
         scatter = new_basis(scatter)
-        ax.plot(scatter[:,0], scatter[:,1],
-                scatter_attribute, markersize=8*markersize)
+        if color is not None:
+            ax.plot(scatter[:,0], scatter[:,1],
+                    scatter_attribute, markersize=8*markersize, color=color)
+        else:
+            ax.plot(scatter[:,0], scatter[:,1],
+                    scatter_attribute, markersize=8*markersize)
     if array2 is None:
         array2 = array1
     c = ax.contourf(array2.T[::-1,:], levels, extent=extent, cmap=cmap,
