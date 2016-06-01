@@ -296,7 +296,10 @@ class GTM:
         if len(data.shape) == 2: # Projection of vector and not scalar values
             R = R[:,:,None]
         data_map = (R*data).sum(axis=1)/ R.sum(axis=1)
-        return data_map.reshape((self.nx, self.ny))
+        if len(data.shape) == 2:
+            return data_map.reshape((self.nx, self.ny, data.shape[-1]))
+        else:
+            return data_map.reshape((self.nx, self.ny))
 
     def get_G_array(self, logR):
         """
