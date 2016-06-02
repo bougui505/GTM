@@ -294,11 +294,10 @@ class GTM:
         logR, sqcdist, ll = self.logR, self.sqcdist, self.ll
         R = numpy.exp(logR)
         if len(data.shape) == 2: # Projection of vector and not scalar values
-            R = R[:,:,None]
-        data_map = (R*data).sum(axis=1)/ R.sum(axis=1)
-        if len(data.shape) == 2:
+            data_map = (R[:,:,None]*data).sum(axis=1)/ R.sum(axis=1)
             return data_map.reshape((self.nx, self.ny, data.shape[-1]))
         else:
+            data_map = (R*data).sum(axis=1)/ R.sum(axis=1)
             return data_map.reshape((self.nx, self.ny))
 
     def get_G_array(self, logR):
