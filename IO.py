@@ -51,7 +51,8 @@ def array_to_pdb(array, struct, outfile='traj.pdb', b_factor=None):
         array = array.reshape(n_frames, n_atoms, 3)
         u = MDAnalysis.Universe(struct)
         W = MDAnalysis.Writer(outfile, multiframe=True)
-        b_factor = numpy.nan_to_num(b_factor)
+        if b_factor is not None:
+            b_factor = numpy.nan_to_num(b_factor)
         for i, f in enumerate(array):
             u.atoms.positions = f
             if b_factor is not None:
