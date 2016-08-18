@@ -81,7 +81,10 @@ class GTM:
         print "𝛽 = %.4g | 𝜎_mapping = %.4g | 𝜎_mapping/𝜎_data = %.4g"%(self.beta, sigma_mapping, sigma_mapping_normalized)
         print "𝓵 = %.4g"%ll
 
-    def load_input_space(self, inputmat):
+    def load_input_space(self, inputmat, recompute_params = True):
+        """
+        If recompute_params, beta is recomputed
+        """
         if self.input_mean is None:
             self.input_mean = inputmat.mean(axis=0)
         self.T = inputmat - self.input_mean
@@ -95,7 +98,7 @@ class GTM:
             self.nx, self.ny, self.eival, self.eivec = self.get_dim(
                                                                self.nx, self.ny)
         self.T = numpy.dot(self.T, self.eivec)
-        if self.W is not None:
+        if self.W is not None and recompute_params:
             # New logR, sqcdist and log likelihood
             logR, sqcdist, ll = self.get_posterior_array(self.T, self.W,
                                                          self.beta)
