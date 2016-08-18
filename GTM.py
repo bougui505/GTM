@@ -98,15 +98,16 @@ class GTM:
             self.nx, self.ny, self.eival, self.eivec = self.get_dim(
                                                                self.nx, self.ny)
         self.T = numpy.dot(self.T, self.eivec)
-        if self.W is not None and recompute_params:
+        if self.W is not None:
             # New logR, sqcdist and log likelihood
             logR, sqcdist, ll = self.get_posterior_array(self.T, self.W,
                                                          self.beta)
-            # New beta
-            logbeta = numpy.log(self.n*self.d) - scipy.misc.logsumexp(self.logR+
-                                                        numpy.log(self.sqcdist))
-            self.beta = numpy.exp(logbeta)
-            ######
+            if recompute_params:
+                # New beta
+                logbeta = numpy.log(self.n*self.d) - scipy.misc.logsumexp(self.logR+
+                                                            numpy.log(self.sqcdist))
+                self.beta = numpy.exp(logbeta)
+                ######
             sigma_mapping = numpy.sqrt(self.d/self.beta)
             self.sigma_data = numpy.linalg.norm(self.T.std(axis=0))
             sigma_mapping_normalized = sigma_mapping / self.sigma_data
