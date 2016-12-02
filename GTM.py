@@ -19,7 +19,7 @@ except ImportError:
 
 class GTM:
     def __init__(self, inputmat, (nx, ny), n_center = 10, sigma=None, alpha = 0., 
-                 gtm_file = None):
+                 gtm_file = None, metric='sqeuclidean'):
         """
 
         • inputmat: input data size: n×d, with n the number of data and d the 
@@ -35,11 +35,14 @@ class GTM:
 
         • if gtm_file is not None, load the data from a previous run
 
+        • metric: could be any scipy metric or any user defined function
+
         """
         if gtm_file is not None:
             self.load_data(infile=gtm_file)
             ll = self.ll
         else:
+            self.metric = metric
             self.input_mean = None
             self.max_norm = None
             self.eivec = None
@@ -244,7 +247,7 @@ class GTM:
         """
         D = W.shape[1]
         y = numpy.dot(self.Phi, W)
-        sqcdist = scipy.spatial.distance.cdist(numpy.dot(self.Phi, W), t, 'sqeuclidean')
+        sqcdist = scipy.spatial.distance.cdist(numpy.dot(self.Phi, W), t, self.metric)
         L = ((beta/(2*numpy.pi))**(D/2.))*numpy.exp(-(beta/2)*sqcdist)
         return L
 
@@ -260,7 +263,7 @@ class GTM:
         """
         D = W.shape[1]
         y = numpy.dot(self.Phi, W)
-        sqcdist = scipy.spatial.distance.cdist(y, t, 'sqeuclidean')
+        sqcdist = scipy.spatial.distance.cdist(y, t, self.metric)
         logL = -(beta/2)*sqcdist
         logE = scipy.misc.logsumexp(-beta/2 * sqcdist, axis=0)
         logR = logL - logE
@@ -388,6 +391,7 @@ class GTM:
         self.posterior_mean = data_dict['posterior_mean']
         self.log_density = data_dict['log_density']
         self.beta_list = data_dict['beta_list']
+        self.metric = data_dict['metric']
 
     def get_posterior_mode(self):
         """
@@ -440,7 +444,7 @@ class GTM:
         t = t.reshape(self.n, n_atoms, 3)
         atomic_fluctuations = []
         for atom_id in range(n_atoms):
-            fluctuation = self.project_data(scipy.spatial.distance.cdist(y[:,atom_id,:], t[:,atom_id,:], metric='sqeuclidean'))
+            fluctuation = self.project_data(scipy.spatial.distance.cdist(y[:,atom_id,:], t[:,atom_id,:], metric=self.metric))
             fluctuation = numpy.sqrt(fluctuation)
             atomic_fluctuations.append(fluctuation.flatten())
         atomic_fluctuations = numpy.asarray(atomic_fluctuations).T
