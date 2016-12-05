@@ -443,8 +443,12 @@ class GTM:
         t = self.T.dot(self.eivec_inv) * self.max_norm + self.input_mean
         t = t.reshape(self.n, n_atoms, 3)
         atomic_fluctuations = []
+        R = numpy.exp(self.logR)
         for atom_id in range(n_atoms):
-            fluctuation = self.project_data(scipy.spatial.distance.cdist(y[:,atom_id,:], t[:,atom_id,:], metric=self.metric))
+            data = scipy.spatial.distance.cdist(y[:,atom_id,:], t[:,atom_id,:],
+                                                metric=self.metric)
+            fluctuation = (R*data).sum(axis=1)/ R.sum(axis=1)
+            fluctuation = fluctuation.reshape((self.nx, self.ny))
             fluctuation = numpy.sqrt(fluctuation)
             atomic_fluctuations.append(fluctuation.flatten())
         atomic_fluctuations = numpy.asarray(atomic_fluctuations).T
