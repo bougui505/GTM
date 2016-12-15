@@ -19,7 +19,7 @@ except ImportError:
 
 class GTM:
     def __init__(self, inputmat, (nx, ny), n_center = 10, sigma=None, alpha = 0., 
-                 gtm_file = None, metric='sqeuclidean'):
+                 gtm_file = None, metric='sqeuclidean', autodim=True):
         """
 
         • inputmat: input data size: n×d, with n the number of data and d the 
@@ -37,12 +37,16 @@ class GTM:
 
         • metric: could be any scipy metric or any user defined function
 
+        • autodim: if True shape the map accordingly with the first two
+        eigenvectors.
+
         """
         if gtm_file is not None:
             self.load_data(infile=gtm_file)
             ll = self.ll
         else:
             self.metric = metric
+            self.autodim = autodim
             self.input_mean = None
             self.max_norm = None
             self.eivec = None
@@ -99,7 +103,8 @@ class GTM:
             # Set automatic size of the array according to the PCA of the input
             # data
             self.nx, self.ny, self.eival, self.eivec = self.get_dim(
-                                                               self.nx, self.ny)
+                                                               self.nx, self.ny,
+                                                               autodim=self.autodim)
         self.T = numpy.dot(self.T, self.eivec)
         if self.W is not None:
             # New logR, sqcdist and log likelihood
@@ -168,7 +173,7 @@ class GTM:
         print "𝓵 = %.4g"%ll
         return self.beta, ll
 
-    def get_dim(self, x_dim, y_dim):
+    def get_dim(self, x_dim, y_dim, autodim=True):
         """
         Return the dimension of the Map accordingly to the 2 first principal components of the dataset t
         max_input: maximum number of input data points to tke into account for the PCA
@@ -180,8 +185,9 @@ class GTM:
         eival = eival[args]
         eivec = eivec[:, args]
         sqev = numpy.sqrt(eival[:2])
-        x_dim, y_dim = map(lambda x: int(round(x)), sqev / (
-                           (numpy.prod(sqev) / (x_dim * y_dim)) ** (1. / 2)))
+        if autodim:
+            x_dim, y_dim = map(lambda x: int(round(x)), sqev / (
+                               (numpy.prod(sqev) / (x_dim * y_dim)) ** (1. / 2)))
         return x_dim, y_dim, eival, eivec
 
     def radial_basis_function(self, center, radius):
